@@ -116,6 +116,7 @@ window.addEventListener('scroll', () => {
     const skillsCard = document.getElementById('skills-card');
     const scrollY = window.scrollY;
     
+    // Trigger expansion after 50px of scrolling for main card
     if (scrollY > 50) {
         if (mainCard) mainCard.classList.add('expanded');
         if (!decryptTriggered) {
@@ -127,7 +128,9 @@ window.addEventListener('scroll', () => {
         decryptTriggered = false;
     }
     
-    const triggerPoint = 300;
+    // Show skills section after scrolling past the scroll-spacer (150vh)
+    // Form 2 appears naturally below form 1, no more fading/overlapping
+    const triggerPoint = window.innerHeight * 1.5;
     if (scrollY > triggerPoint) {
         if (skillsCard) skillsCard.classList.add('expanded-second');
         if (mainCard) mainCard.classList.add('hidden');
@@ -272,3 +275,46 @@ function createElectron(x, y) {
     document.body.appendChild(dot);
     setTimeout(() => { dot.remove(); }, 600);
 }
+
+/**
+ * LANGUAGE CARD POPUP MODAL
+ */
+const popup = document.getElementById('projects-popup');
+const popupLangName = document.getElementById('popup-lang-name');
+const popupProjectsList = document.getElementById('popup-projects-list');
+let popupHideTimeout;
+
+document.querySelectorAll('.lang-card').forEach(card => {
+    card.addEventListener('mouseenter', (e) => {
+        clearTimeout(popupHideTimeout);
+        
+        const langName = card.getAttribute('data-lang');
+        const projectsString = card.getAttribute('data-projects');
+        const projects = projectsString ? projectsString.split('|') : [];
+        
+        // Update popup content
+        popupLangName.textContent = langName;
+        popupProjectsList.innerHTML = projects.map(p => `<p>${p.trim()}</p>`).join('');
+        
+        // Popup is centered via CSS, no need for dynamic positioning
+        popup.classList.add('show');
+    });
+});
+
+popup.addEventListener('mouseenter', () => {
+    clearTimeout(popupHideTimeout);
+});
+
+popup.addEventListener('mouseleave', () => {
+    popupHideTimeout = setTimeout(() => {
+        popup.classList.remove('show');
+    }, 100);
+});
+
+document.querySelectorAll('.lang-card').forEach(card => {
+    card.addEventListener('mouseleave', () => {
+        popupHideTimeout = setTimeout(() => {
+            popup.classList.remove('show');
+        }, 100);
+    });
+});
