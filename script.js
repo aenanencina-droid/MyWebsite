@@ -6,6 +6,12 @@ let rainDrops = [];
 const fontSize = 18;
 const alphabet = "01";
 
+// Mouse repel effect
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
+const repelRadius = 100; // pixels
+const repelStrength = 2; // how hard to push
+
 function setupCanvas() {
     // Set canvas to the actual size of the window
     canvas.width = window.innerWidth;
@@ -37,6 +43,27 @@ const draw = () => {
     for (let i = 0; i < rainDrops.length; i++) {
         const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
         
+        // Calculate position for this column
+        const x = i * fontSize;
+        const y = rainDrops[i] * fontSize;
+        
+        // Mouse repel effect
+        const dx = x - mouseX;
+        const dy = y - mouseY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < repelRadius) {
+            // Push the drop away from mouse
+            const angle = Math.atan2(dy, dx);
+            const force = (repelRadius - distance) / repelRadius * repelStrength;
+            rainDrops[i] -= Math.sin(angle) * force;
+        }
+        
+        // Wrap around if pushed too far up
+        if (rainDrops[i] < -1) {
+            rainDrops[i] = canvas.height / fontSize;
+        }
+        
         ctx.shadowBlur = 10;
         ctx.shadowColor = "#00FF41";
 
@@ -46,7 +73,7 @@ const draw = () => {
             ctx.fillStyle = '#00FF41';
         }
 
-        ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
+        ctx.fillText(text, x, y);
 
         // If the drop hits the bottom of the current canvas height
         if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
@@ -59,33 +86,9 @@ const draw = () => {
 
 setInterval(draw, 35);
 
-// ... keep your Matrix Rain code from before ...
-
+// Setup and scroll handlers
 const mainCard = document.getElementById('main-card');
-
-window.addEventListener('scroll', () => {
-    // Get how far the user has scrolled
-    const scrollValue = window.scrollY;
-
-    // If the user scrolls more than 100px, expand the card
-    if (scrollValue > 100) {
-        mainCard.classList.add('expanded');
-    } else {
-        mainCard.classList.remove('expanded');
-    }
-});
-
-// Update the setupCanvas function to ensure Matrix fills the whole page height
-function setupCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    columns = Math.floor(canvas.width / fontSize);
-    rainDrops = [];
-    for (let x = 0; x < columns; x++) {
-        rainDrops[x] = Math.random() * -100;
-    }
-}
-// ... Matrix Rain code stays the same ...
+let decryptTriggered = false; // Flag to prevent multiple decrypt calls
 
 window.addEventListener('scroll', () => {
     const mainCard = document.getElementById('main-card');
@@ -95,8 +98,14 @@ window.addEventListener('scroll', () => {
     // Trigger expansion after 50px of scrolling for main card
     if (scrollY > 50) {
         mainCard.classList.add('expanded');
+        // Trigger decrypt effect only once, with proper delay
+        if (!decryptTriggered) {
+            decryptTriggered = true;
+            setTimeout(() => decryptTimeline(), 300); // Wait for CSS animation to complete
+        }
     } else {
         mainCard.classList.remove('expanded');
+        decryptTriggered = false; // Reset when scrolling back up
     }
     
     // expand skills section once the user scrolls past the main-card area
@@ -110,13 +119,91 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// CURSOR LIGHTNING EFFECT
-let mouseX = 0;
-let mouseY = 0;
+// System Decrypt Effect
+function decryptTimeline() {
+    const timelineItems = document.querySelectorAll('.timeline-item');
+    const symbols = '@#$%&*!?~^|<>';
+    
+    timelineItems.forEach((item, index) => {
+        const yearEl = item.querySelector('.year');
+        const eventEl = item.querySelector('.event');
+        
+        // Only run decrypt if we haven't already
+        if (item.dataset.decrypted === 'true') {
+            return; // Already decrypted, skip
+        }
+        
+        // Store original text BEFORE modifying anything
+        const originalYear = yearEl.textContent.trim();
+        const originalEvent = eventEl.textContent.trim();
+        
+        // Generate random symbols matching the exact length
+        const randomYear = Array.from(originalYear)
+            .map(() => symbols[Math.floor(Math.random() * symbols.length)])
+            .join('');
+        const randomEvent = Array.from(originalEvent)
+            .map(() => symbols[Math.floor(Math.random() * symbols.length)])
+            .join('');
+        
+        // Set to random encrypted state
+        yearEl.textContent = randomYear;
+        eventEl.textContent = randomEvent;
+        
+        // Trigger animation class
+        item.classList.add('decrypting');
+        
+        // Decrypt character by character
+        const decryptDuration = 40; // ms per character
+        let currentIndex = 0;
+        const maxLength = Math.max(originalYear.length, originalEvent.length);
+        
+        const decryptInterval = setInterval(() => {
+            // Build decrypted year
+            let decryptedYear = '';
+            for (let i = 0; i < originalYear.length; i++) {
+                if (i < currentIndex) {
+                    decryptedYear += originalYear[i];
+                } else {
+                    decryptedYear += symbols[Math.floor(Math.random() * symbols.length)];
+                }
+            }
+            yearEl.textContent = decryptedYear;
+            
+            // Build decrypted event
+            let decryptedEvent = '';
+            for (let i = 0; i < originalEvent.length; i++) {
+                if (i < currentIndex) {
+                    decryptedEvent += originalEvent[i];
+                } else {
+                    decryptedEvent += symbols[Math.floor(Math.random() * symbols.length)];
+                }
+            }
+            eventEl.textContent = decryptedEvent;
+            
+            currentIndex++;
+            
+            // Stop when we've decrypted all characters
+            if (currentIndex > maxLength) {
+                // Ensure final text is perfect
+                yearEl.textContent = originalYear;
+                eventEl.textContent = originalEvent;
+                item.classList.remove('decrypting');
+                item.dataset.decrypted = 'true'; // Mark as decrypted
+                clearInterval(decryptInterval);
+            }
+        }, decryptDuration);
+    });
+}
+
+// CURSOR LIGHTNING EFFECT + MOUSE TRACKING
+let cursorX = 0;
+let cursorY = 0;
 
 document.addEventListener('mousemove', (e) => {
     mouseX = e.clientX;
     mouseY = e.clientY;
+    cursorX = e.clientX;
+    cursorY = e.clientY;
     
     // Create lightning spark effect randomly
     if (Math.random() > 0.7) {
