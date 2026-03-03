@@ -112,6 +112,10 @@ body {
 
 <script>
 let scene, camera, renderer, globeGroup, marker, ring, controls;
+let raycaster = new THREE.Raycaster();
+let mouse = new THREE.Vector2();
+let isZooming = false;
+
 const PH_COORD = { lat: 12.8797, lon: 121.7740 };
 const RADIUS = 8;
 const container = document.getElementById('canvas-container');
@@ -137,7 +141,7 @@ function init() {
     renderer.setClearColor(0x000000, 1);
     container.appendChild(renderer.domElement);
 
-    // ⭐ INTERACTION CONTROLS
+    // controls
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
@@ -145,10 +149,11 @@ function init() {
     controls.minDistance = 12;
     controls.maxDistance = 40;
 
+    renderer.domElement.addEventListener('click', onMouseClick);
+
     globeGroup = new THREE.Group();
     scene.add(globeGroup);
 
-    // Base faint globe
     const baseGeo = new THREE.SphereGeometry(RADIUS, 40, 40);
     const baseMat = new THREE.PointsMaterial({
         size: 0.03,
@@ -169,16 +174,12 @@ function init() {
     );
 
     setupMarkers();
-
-    // ⭐ Auto focus Philippines on load
     focusOnPhilippines();
-
     animate();
 }
 
 function generatePointsFromTexture(texture) {
     const img = texture.image;
-
     if (!img.complete) {
         img.onload = () => generatePointsFromTexture(texture);
         return;
@@ -186,7 +187,6 @@ function generatePointsFromTexture(texture) {
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-
     canvas.width = img.width;
     canvas.height = img.height;
     ctx.drawImage(img, 0, 0);
@@ -278,13 +278,59 @@ function focusOnPhilippines() {
 
     const dir = target.clone().normalize();
     camera.position.copy(dir.multiplyScalar(20));
+    controls.target.copy(target);
     controls.update();
+}
+
+function zoomToPhilippines() {
+    if (isZooming) return;
+    isZooming = true;
+
+    const targetPos = latLonToVector3(
+        PH_COORD.lat,
+        PH_COORD.lon,
+        RADIUS
+    );
+
+    const startPos = camera.position.clone();
+    const endPos = targetPos.clone().normalize().multiplyScalar(12);
+
+    const startTarget = controls.target.clone();
+    const endTarget = targetPos.clone();
+
+    const duration = 1200;
+    const startTime = performance.now();
+
+    function animateZoom(now) {
+        const t = Math.min((now - startTime) / duration, 1);
+        const ease = t * (2 - t);
+
+        camera.position.lerpVectors(startPos, endPos, ease);
+        controls.target.lerpVectors(startTarget, endTarget, ease);
+        controls.update();
+
+        if (t < 1) requestAnimationFrame(animateZoom);
+        else isZooming = false;
+    }
+
+    requestAnimationFrame(animateZoom);
+}
+
+function onMouseClick(event) {
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObject(marker);
+
+    if (intersects.length > 0) {
+        zoomToPhilippines();
+    }
 }
 
 function updateHUD() {
     if (!marker) return;
 
-    // ⭐ ring always faces camera
     ring.lookAt(camera.position);
 
     const vector = new THREE.Vector3();
@@ -302,10 +348,9 @@ function updateHUD() {
 function animate() {
     requestAnimationFrame(animate);
 
-    controls.update(); // ⭐ REQUIRED for damping
+    controls.update();
 
-    // subtle idle spin only when not interacting
-    if (!controls.dragging) {
+    if (!isZooming) {
         globeGroup.rotation.y += 0.0008;
     }
 
@@ -326,4 +371,3 @@ window.addEventListener('resize', () => {
 
 </body>
 </html>
-
