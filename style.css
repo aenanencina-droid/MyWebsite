@@ -36,8 +36,10 @@ body {
 }
 
 /* This provides the room to scroll without moving the card */
-.scroll-trigger {
-    height: 180vh; 
+.scroll-spacer {
+    height: 150vh; 
+    position: relative;
+    z-index: 5;
 }
 
 /* 4. THE GLASS PROFILE CARD */
@@ -164,16 +166,23 @@ body {
 #skills-section {
     position: relative;
     width: 100%;
-    margin-top: 100vh; /* push down so scrolling reveals it */
+    min-height: 100vh;
+    z-index: 20;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 0;
 }
 
 #skills-card {
     width: 90%;
-    max-width: none;
+    max-width: 900px;
     margin: 0 auto;
     padding: 40px 20px;
-    opacity: 0;
-    transition: opacity 0.8s ease, height 0.8s ease;
+    background: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 255, 65, 0.2);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -181,9 +190,7 @@ body {
 }
 
 #skills-card.expanded-second {
-    opacity: 1;
-    height: 100vh; /* fill viewport when expanded */
-    width: 100%;
+    /* Always visible - displays naturally as a section */
 }
 
 .lang-container {
@@ -203,18 +210,17 @@ body {
     overflow: hidden;
     cursor: pointer;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: width 0.3s, transform 0.3s;
+    transition: all 0.3s;
 }
 
 .lang-card:hover {
-    /* expand to about three cards wide without stretching text */
-    width: 300px;
-    transform: scaleY(1.2);
-    z-index: 5;
+    background: rgba(0,0,0,0.8);
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+    transform: scale(1.05);
 }
-
 
 .lang-name {
     color: #00FF41;
@@ -230,21 +236,66 @@ body {
     margin: 0 auto 8px auto;
 }
 
-.projects {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: rgba(0,0,0,0.8);
-    color: #fff;
-    font-size: 0.8rem;
-    padding: 5px;
+/* Projects Popup Modal */
+.projects-popup {
+    position: fixed;
     display: none;
-    text-align: left;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid #00FF41;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 350px;
+    z-index: 5000;
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.5);
+    backdrop-filter: blur(10px);
 }
 
-.lang-card:hover .projects {
+.projects-popup.show {
     display: block;
+    animation: popup-fade 0.3s ease-out;
+}
+
+.popup-content {
+    color: #00FF41;
+}
+
+.popup-content h4 {
+    margin: 0 0 15px 0;
+    color: #FFF;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.popup-projects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.popup-projects-list p {
+    margin: 0;
+    color: #00FFA0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    padding: 8px;
+    background: rgba(0, 255, 65, 0.05);
+    border-left: 2px solid #00FF41;
+    padding-left: 10px;
+}
+
+@keyframes popup-fade {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .expanded .career-path {
@@ -398,10 +449,128 @@ body {
     font-weight: bold;
 }
 
-/* small responsive tweak */
-@media (max-width: 520px) {
-    .skill-label { width: 100px; font-size: 0.75rem; }
-    .skill-percent { width: 40px; font-size: 0.8rem; }
+/* RESPONSIVE DESIGN */
+@media (max-width: 1024px) {
+    #skills-card {
+        max-width: 700px;
+    }
+    .lang-card {
+        width: 85px;
+        height: 85px;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+    .glass-form {
+        width: 95%;
+        max-width: 380px;
+        padding: 20px;
+    }
+    .profile-pic {
+        width: 100px;
+        height: 100px;
+    }
+    h2 {
+        font-size: 1.4rem;
+        margin: 10px 0;
+    }
+    .role {
+        font-size: 0.85rem;
+    }
+    #skills-card {
+        max-width: 90%;
+        padding: 20px 15px;
+    }
+    .lang-card {
+        width: 80px;
+        height: 80px;
+    }
+    .skill-label { width: 90px; font-size: 0.7rem; }
+    .skill-percent { width: 35px; font-size: 0.75rem; }
+    .skill-bar {
+        height: 12px;
+    }
+    .pentagon {
+        width: 220px;
+        height: 220px;
+    }
+    .projects-popup {
+        max-width: 300px;
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .glass-form {
+        width: 95%;
+        max-width: 340px;
+        padding: 15px;
+    }
+    .profile-pic {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 10px;
+    }
+    h2 {
+        font-size: 1.2rem;
+        margin: 8px 0;
+    }
+    .role {
+        font-size: 0.75rem;
+    }
+    #skills-section {
+        padding: 20px 0;
+    }
+    #skills-card {
+        max-width: 95%;
+        padding: 15px 10px;
+    }
+    h3 {
+        font-size: 1rem;
+    }
+    .lang-container {
+        gap: 10px;
+    }
+    .lang-card {
+        width: 70px;
+        height: 70px;
+    }
+    .lang-logo {
+        width: 36px;
+        height: 36px;
+        margin-bottom: 4px;
+    }
+    .lang-name {
+        font-size: 0.75rem;
+    }
+    .skill-label { width: 70px; font-size: 0.65rem; }
+    .skill-percent { width: 30px; font-size: 0.65rem; }
+    .skill-bars {
+        max-width: 100%;
+    }
+    .pentagon {
+        width: 160px;
+        height: 160px;
+    }
+    .pentagon-label {
+        font-size: 0.7rem;
+    }
+    .floating-nav {
+        bottom: 20px;
+        right: 20px;
+        gap: 10px;
+    }
+    .nav-icon-link {
+        width: 50px;
+        height: 50px;
+    }
+    .projects-popup {
+        max-width: 280px;
+        padding: 12px;
+    }
 }
 /* extra electron particles */
 .electron {
@@ -421,11 +590,18 @@ body {
     100% { opacity: 0; transform: scale(0.2); }
 }
 
-/* Floating Eye Button */
-.dossier-link {
+/* Floating Navigation Container */
+.floating-nav {
     position: fixed;
     bottom: 30px;
     right: 30px;
+    display: flex;
+    gap: 15px;
+    z-index: 1000;
+}
+
+/* Unified Button Styling */
+.nav-icon-link, .dossier-link, .globe-link {
     width: 60px;
     height: 60px;
     background: rgba(0, 255, 65, 0.1);
@@ -434,14 +610,13 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
     cursor: pointer;
     box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
     transition: all 0.3s ease;
     text-decoration: none;
 }
 
-.dossier-link:hover {
+.nav-icon-link:hover, .dossier-link:hover, .globe-link:hover {
     background: rgba(0, 255, 65, 0.3);
     box-shadow: 0 0 25px rgba(0, 255, 65, 0.6);
     transform: scale(1.1);
@@ -454,7 +629,7 @@ body {
     height: 18px;
     background: transparent;
     border: 2px solid #00FF41;
-    border-radius: 50% 0 50% 0; /* Creates an eye shape */
+    border-radius: 50% 0 50% 0;
     transform: rotate(45deg);
     overflow: hidden;
 }
@@ -472,7 +647,6 @@ body {
     animation: eye-blink 3s infinite ease-in-out;
 }
 
-/* Blinking Animation */
 @keyframes eye-blink {
     0%, 90%, 100% { transform: translate(-50%, -50%) scale(1); }
     95% { transform: translate(-50%, -50%) scale(0.1); }
@@ -533,4 +707,54 @@ body {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
+}
+
+/* Globe Icon Construction */
+.icon-globe {
+    width: 35px;
+    height: 35px;
+    position: relative;
+    border: 1px solid #00FF41;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+    background: rgba(0, 255, 65, 0.05);
+}
+
+/* Vertical Ellipse (Meridians) */
+.icon-globe .meridians {
+    width: 15px;
+    height: 100%;
+    border: 1px solid rgba(0, 255, 65, 0.5);
+    border-radius: 50%;
+    position: absolute;
+}
+
+/* Horizontal Line (Equator) */
+.icon-globe .equator {
+    width: 100%;
+    height: 1px;
+    background: rgba(0, 255, 65, 0.5);
+    position: absolute;
+}
+
+/* Pulsing dot for the Philippines */
+.marker-ph {
+    width: 4px;
+    height: 4px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 35%;
+    right: 25%;
+    box-shadow: 0 0 8px #fff;
+    animation: marker-pulse 1.5s infinite;
+}
+
+@keyframes marker-pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.5; }
+    100% { transform: scale(1); opacity: 1; }
 }
