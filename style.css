@@ -222,6 +222,14 @@ body {
     pointer-events: none;
 }
 
+.lang-logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 8px auto;
+}
+
 .projects {
     position: absolute;
     bottom: 0;
@@ -411,4 +419,61 @@ body {
 @keyframes electron-fade {
     0% { opacity: 1; transform: scale(1); }
     100% { opacity: 0; transform: scale(0.2); }
+}
+
+/* Floating Eye Button */
+.dossier-link {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 255, 65, 0.1);
+    border: 2px solid #00FF41;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.dossier-link:hover {
+    background: rgba(0, 255, 65, 0.3);
+    box-shadow: 0 0 25px rgba(0, 255, 65, 0.6);
+    transform: scale(1.1);
+}
+
+/* Eye Logo Shape */
+.eye-icon {
+    position: relative;
+    width: 30px;
+    height: 18px;
+    background: transparent;
+    border: 2px solid #00FF41;
+    border-radius: 50% 0 50% 0; /* Creates an eye shape */
+    transform: rotate(45deg);
+    overflow: hidden;
+}
+
+.eye-inner {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #00FF41;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px #00FF41;
+    animation: eye-blink 3s infinite ease-in-out;
+}
+
+/* Blinking Animation */
+@keyframes eye-blink {
+    0%, 90%, 100% { transform: translate(-50%, -50%) scale(1); }
+    95% { transform: translate(-50%, -50%) scale(0.1); }
 }
