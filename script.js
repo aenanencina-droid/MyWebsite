@@ -113,11 +113,40 @@ window.addEventListener('scroll', () => {
     if (scrollY > triggerPoint) {
         skillsCard.classList.add('expanded-second');
         mainCard.classList.add('hidden');
+        // animate skill bars when skills section expands
+        animateSkillBars();
     } else {
         skillsCard.classList.remove('expanded-second');
         mainCard.classList.remove('hidden');
+        resetSkillBars();
     }
 });
+
+// Animate skill bars by reading their data-percent attribute
+function animateSkillBars() {
+    const bars = document.querySelectorAll('.skill-bar');
+    bars.forEach(bar => {
+        if (bar.dataset.animated === 'true') return; // don't re-run
+        const percent = parseInt(bar.getAttribute('data-percent') || '0', 10);
+        const fill = bar.querySelector('.skill-fill');
+        if (fill) {
+            // slight stagger for nicer effect
+            setTimeout(() => { fill.style.width = percent + '%'; }, Math.random() * 300);
+            bar.dataset.animated = 'true';
+        }
+    });
+}
+
+function resetSkillBars() {
+    const bars = document.querySelectorAll('.skill-bar');
+    bars.forEach(bar => {
+        const fill = bar.querySelector('.skill-fill');
+        if (fill) {
+            fill.style.width = '0%';
+            delete bar.dataset.animated;
+        }
+    });
+}
 
 // System Decrypt Effect
 function decryptTimeline() {
