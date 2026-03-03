@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azhil Leigh Encina | Portfolio</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="matrix-canvas"></canvas>
+
+    <main>
+        <div class="fixed-wrapper">
+            <section id="profile-card">
+                <div class="glass-form" id="main-card">
+                    <img src="Encina_Azhil_Leigh_2x2.jpeg" alt="Azhil Leigh Encina" class="profile-pic">
+                    <h2>Azhil Leigh Encina</h2>
+                    <p class="role">Software Developer | Tech Enthusiast</p>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="career-path">
+                        <h3>SYSTEM_HISTORY: CAREER_PATH</h3>
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <span class="year">2022 - Present</span>
+                                <span class="event">College (Taguig City University)</span>
+                            </div>
+                            <div class="timeline-item">
+                                <span class="year">2020 - 2022</span>
+                                <span class="event">Senior Highschool (BNHS)</span>
+                            </div>
+                            <div class="timeline-item">
+                                <span class="year">2016 - 2020</span>
+                                <span class="event">Junior Highschool (BNHS)</span>
+                            </div>
+                            <div class="timeline-item">
+                                <span class="year">2012 - 2016</span>
+                                <span class="event">Primary School (CP STA TERESA SCHOOL)</span>
+                            </div>
+                            <div class="timeline-item">
+                                <span class="year">2010 - 2012</span>
+                                <span class="event">Prep-School (RICCC)
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+                    <p class="bio">Scroll down to expand system logs.</p>
+                </div>
+            </section>
+        </div>
+        
+        <section id="skills-section">
+            <div class="glass-form" id="skills-card">
+                <h3>PROGRAMMING LANGUAGES</h3>
+                <div class="lang-container">
+                    <div class="lang-card" data-lang="Python (Flask)">
+                        <span class="lang-name">Python (Flask)</span>
+                        <div class="projects">
+                            <p>Project 1</p>
+                            <p>Project 2</p>
+                        </div>
+                    </div>
+                    <div class="lang-card" data-lang="PHP">
+                        <span class="lang-name">PHP</span>
+                        <div class="projects">
+                            <p>Project 1</p>
+                            <p>Project 2</p>
+                        </div>
+                    </div>
+                    <div class="lang-card" data-lang="JavaScript">
+                        <span class="lang-name">JavaScript</span>
+                        <div class="projects">
+                            <p>Project 1</p>
+                            <p>Project 2</p>
+                        </div>
+                    </div>
+                    <div class="lang-card" data-lang="VB.Net">
+                        <span class="lang-name">VB.Net</span>
+                        <div class="projects">
+                            <p>Project 1</p>
+                            <p>Project 2</p>
+                        </div>
+                    </div>
+                    <div class="lang-card" data-lang="Kotlin">
+                        <span class="lang-name">Kotlin</span>
+                        <div class="projects">
+                            <p>Project 1</p>
+                            <p>Project 2</p>
+                        </div>
+                    </div>
+                    <div class="lang-card" data-lang="Assembly">
+                        <span class="lang-name">Assembly</span>
+                        <div class="projects">
+                            <p>Project 1</p>
+                            <p>Project 2</p>
+                        </div>
+                    </div>
+                    <div class="lang-card" data-lang="SQL">
+                        <span class="lang-name">SQL</span>
+                        <div class="projects">
+                            <p>Project 1</p>
+                            <p>Project 2</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- skill rating pentagon diagram -->
+                <div class="skill-chart">
+                    <svg viewBox="0 0 200 200" class="pentagon">
+                        <polygon points="100,10  190,70  155,180 45,180 10,70" class="pentagon-shape" />
+                        <!-- inner percentage polygon -->
+                        <polygon points="100,55 154,82 146.75,168 50.5,172 23.5,74.5" class="pentagon-percent" />
+                    </svg>
+                    <!-- corner labels outside SVG -->
+                    <div class="pentagon-label top">Cybersecurity 50%</div>
+                    <div class="pentagon-label right">Cloud 60%</div>
+                    <div class="pentagon-label br">Data 85%</div>
+                    <div class="pentagon-label bl">Software 90%</div>
+                    <div class="pentagon-label left">AI/ML 85%</div>
+                </div>
+                <!-- skill descriptions -->
+                <div class="skill-list">
+                    <p><strong>Cybersecurity 50%</strong>: Moderate understanding of defensive techniques and protocols; still building hands-on experience.</p>
+                    <p><strong>Cloud Computing &amp; Management 60%</strong>: Comfortable deploying and managing cloud resources; learning advanced orchestration.</p>
+                    <p><strong>Data Analysis &amp; Database Management 85%</strong>: Strong skills in querying, organizing and analyzing data using SQL and related tools.</p>
+                    <p><strong>Software Development &amp; Programming 90%</strong>: Highly proficient in multiple languages; can architect and implement scalable applications.</p>
+                    <p><strong>AI and Machine Learning 85%</strong>: Solid foundation in algorithms and models; able to build and evaluate machine learning solutions.</p>
+                </div>
+            </div>
+        </section>
+        
+        <div class="scroll-trigger"></div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
