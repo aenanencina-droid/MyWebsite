@@ -112,143 +112,159 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        let scene, camera, renderer, globeGroup, marker, ring;
-        const PH_COORD = { lat: 12.8797, lon: 121.7740 };
-        const RADIUS = 8; // Slightly larger for better impact
-        const container = document.getElementById('canvas-container');
-        const label = document.getElementById('marker-label');
+    let scene, camera, renderer, globeGroup, marker, ring;
+    const PH_COORD = { lat: 12.8797, lon: 121.7740 };
+    const RADIUS = 8; 
+    const container = document.getElementById('canvas-container');
+    const label = document.getElementById('marker-label');
 
-        function init() {
-            scene = new THREE.Scene();
-            
-            // Adjust FOV to make the globe feel bigger
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 18; 
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 20; 
 
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            container.appendChild(renderer.domElement);
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
 
-            globeGroup = new THREE.Group();
-            scene.add(globeGroup);
+        globeGroup = new THREE.Group();
+        scene.add(globeGroup);
 
-            const loader = new THREE.TextureLoader();
-            loader.crossOrigin = "anonymous";
-            
-            // Texture Loading with Logic fix
-            loader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular.png', (texture) => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = 1024; canvas.height = 512;
-                ctx.drawImage(texture.image, 0, 0, 1024, 512);
-                const data = ctx.getImageData(0, 0, 1024, 512).data;
+        // --- THE FIX: Create a "Grid Globe" as a base so it's never empty ---
+        const sphereGeo = new THREE.SphereGeometry(RADIUS, 40, 40);
+        const sphereMat = new THREE.PointsMaterial({
+            size: 0.03,
+            color: 0x004411, // Darker green for the background grid
+            transparent: true,
+            opacity: 0.3
+        });
+        const baseGrid = new THREE.Points(sphereGeo, sphereMat);
+        globeGroup.add(baseGrid);
 
-                const positions = [];
-                for (let i = 0; i < data.length; i += 4) {
-                    if (data[i] > 20) { 
-                        const x = (i / 4) % 1024;
-                        const y = Math.floor((i / 4) / 1024);
-                        const lat = (0.5 - y / 512) * Math.PI;
-                        const lon = (x / 1024 - 0.5) * Math.PI * 2;
-                        positions.push(
-                            RADIUS * Math.cos(lat) * Math.cos(lon),
-                            RADIUS * Math.sin(lat),
-                            RADIUS * Math.cos(lat) * Math.sin(lon)
-                        );
-                    }
-                }
+        // --- GUARANTEED MAP LOADING ---
+        const loader = new THREE.TextureLoader();
+        loader.crossOrigin = "Anonymous";
+        
+        // Attempt to load the landmass data
+        loader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular.png', 
+            (texture) => {
+                generatePointsFromTexture(texture);
+            },
+            undefined,
+            (err) => {
+                console.warn("External texture blocked. Using procedural fallback.");
+                generateProceduralStars();
+            }
+        );
 
-                const geometry = new THREE.BufferGeometry();
-                geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-                const material = new THREE.PointsMaterial({
-                    size: 0.06,
-                    color: 0x00FF41,
-                    transparent: true,
-                    opacity: 0.7,
-                    blending: THREE.AdditiveBlending
-                });
-                globeGroup.add(new THREE.Points(geometry, material));
-            });
+        setupMarkers();
+        globeGroup.rotation.y = -1.5; 
+        animate();
+    }
 
-            // Calculate Coordinates
-            const phi = (90 - PH_COORD.lat) * (Math.PI / 180);
-            const theta = (PH_COORD.lon + 180) * (Math.PI / 180);
-            const mx = -(RADIUS * Math.sin(phi) * Math.cos(theta));
-            const my = RADIUS * Math.cos(phi);
-            const mz = RADIUS * Math.sin(phi) * Math.sin(theta);
+    function generatePointsFromTexture(texture) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 512; canvas.height = 256;
+        ctx.drawImage(texture.image, 0, 0, 512, 256);
+        const data = ctx.getImageData(0, 0, 512, 256).data;
 
-            // Marker
-            const markerGeo = new THREE.SphereGeometry(0.18, 12, 12);
-            const markerMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-            marker = new THREE.Mesh(markerGeo, markerMat);
-            marker.position.set(mx, my, mz);
-            globeGroup.add(marker);
-
-            // Ring
-            const ringGeo = new THREE.RingGeometry(0.3, 0.4, 32);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0x00FF41, side: THREE.DoubleSide });
-            ring = new THREE.Mesh(ringGeo, ringMat);
-            ring.position.set(mx * 1.01, my * 1.01, mz * 1.01);
-            ring.lookAt(0, 0, 0);
-            globeGroup.add(ring);
-
-            // --- CRITICAL FIX: ROTATE GLOBE TO FACE PHILIPPINES INITIALLY ---
-            globeGroup.rotation.y = -1.5; 
-
-            animate();
-        }
-
-        function updateHUD() {
-            if (!marker) return;
-            const vector = new THREE.Vector3();
-            marker.getWorldPosition(vector);
-            const cameraDist = camera.position.distanceTo(vector);
-            
-            vector.project(camera);
-
-            const x = (vector.x * .5 + .5) * window.innerWidth;
-            const y = (vector.y * -.5 + .5) * window.innerHeight;
-
-            // Only show label if the marker is on the side facing the camera
-            if (cameraDist < 18) { 
-                label.style.display = 'block';
-                label.style.left = `${x + 15}px`;
-                label.style.top = `${y - 15}px`;
-            } else {
-                label.style.display = 'none';
+        const positions = [];
+        for (let i = 0; i < data.length; i += 4) {
+            if (data[i] > 20) { 
+                const x = (i / 4) % 512;
+                const y = Math.floor((i / 4) / 512);
+                const lat = (0.5 - y / 256) * Math.PI;
+                const lon = (x / 512 - 0.5) * Math.PI * 2;
+                positions.push(
+                    RADIUS * Math.cos(lat) * Math.cos(lon),
+                    RADIUS * Math.sin(lat),
+                    RADIUS * Math.cos(lat) * Math.sin(lon)
+                );
             }
         }
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        const material = new THREE.PointsMaterial({
+            size: 0.07,
+            color: 0x00FF41,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+        globeGroup.add(new THREE.Points(geometry, material));
+    }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            globeGroup.rotation.y += 0.0015; // Slow rotate
-            
-            if (marker) {
-                const s = 1 + Math.sin(Date.now() * 0.006) * 0.4;
-                marker.scale.set(s, s, s);
-                if(ring) ring.scale.set(s, s, s);
-            }
+    function generateProceduralStars() {
+        // This adds extra green "data points" if the map fails
+        const geo = new THREE.IcosahedronGeometry(RADIUS, 5);
+        const mat = new THREE.PointsMaterial({ size: 0.05, color: 0x00FF41 });
+        globeGroup.add(new THREE.Points(geo, mat));
+    }
 
-            updateHUD();
-            renderer.render(scene, camera);
+    function setupMarkers() {
+        const phi = (90 - PH_COORD.lat) * (Math.PI / 180);
+        const theta = (PH_COORD.lon + 180) * (Math.PI / 180);
+        const mx = -(RADIUS * Math.sin(phi) * Math.cos(theta));
+        const my = RADIUS * Math.cos(phi);
+        const mz = RADIUS * Math.sin(phi) * Math.sin(theta);
+
+        marker = new THREE.Mesh(
+            new THREE.SphereGeometry(0.2, 12, 12),
+            new THREE.MeshBasicMaterial({ color: 0xFFFFFF })
+        );
+        marker.position.set(mx, my, mz);
+        globeGroup.add(marker);
+
+        ring = new THREE.Mesh(
+            new THREE.RingGeometry(0.4, 0.5, 32),
+            new THREE.MeshBasicMaterial({ color: 0x00FF41, side: THREE.DoubleSide })
+        );
+        ring.position.set(mx * 1.01, my * 1.01, mz * 1.01);
+        ring.lookAt(0, 0, 0);
+        globeGroup.add(ring);
+    }
+
+    function updateHUD() {
+        if (!marker) return;
+        const vector = new THREE.Vector3();
+        marker.getWorldPosition(vector);
+        const cameraDist = camera.position.distanceTo(vector);
+        vector.project(camera);
+
+        const x = (vector.x * .5 + .5) * window.innerWidth;
+        const y = (vector.y * -.5 + .5) * window.innerHeight;
+
+        if (cameraDist < 20) { 
+            label.style.display = 'block';
+            label.style.left = `${x + 15}px`;
+            label.style.top = `${y - 15}px`;
+        } else {
+            label.style.display = 'none';
         }
+    }
 
-        // Mouse Interactivity
-        document.addEventListener('mousemove', (e) => {
-            const mouseX = (e.clientX / window.innerWidth) - 0.5;
-            const mouseY = (e.clientY / window.innerHeight) - 0.5;
-            scene.rotation.y = mouseX * 0.2;
-            scene.rotation.x = mouseY * 0.2;
-        });
+    function animate() {
+        requestAnimationFrame(animate);
+        globeGroup.rotation.y += 0.0015;
+        if (marker) {
+            const s = 1 + Math.sin(Date.now() * 0.006) * 0.3;
+            marker.scale.set(s, s, s);
+            ring.scale.set(s, s, s);
+        }
+        updateHUD();
+        renderer.render(scene, camera);
+    }
 
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
 
-        init();
-    </script>
+    init();
+</script>
 </body>
 </html>
+
