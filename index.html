@@ -23,7 +23,8 @@
     <canvas id="matrix-canvas"></canvas>
 
     <main>
-        <div class="fixed-container"> <section id="profile-card">
+        <div class="fixed-container">
+            <section id="profile-card">
                 <div class="glass-form" id="main-card">
                     <img src="Encina_Azhil_Leigh_2x2.jpeg" alt="Azhil Leigh Encina" class="profile-pic">
                     <h2>Azhil Leigh Encina</h2>
@@ -59,64 +60,52 @@
 
                     <div class="divider"></div>
                     <p class="bio">Scroll down to expand system logs.</p>
+                    <p class="scroll-hint">▼ SCROLL_TO_ACCESS</p>
                 </div>
             </section>
         </div>
-        
+
+        <!-- Scrollable content area -->
+        <div class="scroll-spacer"></div>
         <section id="skills-section">
             <div class="glass-form" id="skills-card">
                 <h3>PROGRAMMING LANGUAGES</h3>
                 <div class="lang-container">
-                    <div class="lang-card" data-lang="Python (Flask)">
+                    <div class="lang-card" data-lang="Python (Flask)" data-projects="Scholar Sync: AI Powered Scholarship Platform Suggestion|JIRA Third party Web Service">
                         <img class="lang-logo" src="https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg" alt="Python logo">
                         <span class="lang-name">Python (Flask)</span>
-                        <div class="projects">
-                            <p>Scholar Sync: AI Powered Scholarship Platform Suggestion</p>
-                            <p>JIRA Third party Web Service</p>
-                        </div>
                     </div>
-                    <div class="lang-card" data-lang="PHP">
+                    <div class="lang-card" data-lang="PHP" data-projects="Static HTML website using PHP script">
                         <img class="lang-logo" src="https://www.php.net/images/logos/new-php-logo.svg" alt="PHP logo">
                         <span class="lang-name">PHP</span>
-                        <div class="projects">
-                            <p>Static HTML website using PHP script</p>
-                        </div>
                     </div>
-                    <div class="lang-card" data-lang="JavaScript">
+                    <div class="lang-card" data-lang="JavaScript" data-projects="Online Portfolio|UI/UX Coffee Shop ordering System">
                         <img class="lang-logo" src="https://upload.wikimedia.org/wikipedia/commons/6/6a/JavaScript-logo.png" alt="JavaScript logo">
                         <span class="lang-name">JavaScript</span>
-                        <div class="projects">
-                            <p>Online Portfolio</p>
-                            <p>UI/UX Coffee Shop ordering System</p>
-                        </div>
                     </div>
-                    <div class="lang-card" data-lang="VB.Net">
+                    <div class="lang-card" data-lang="VB.Net" data-projects="POS - Karinderya Foods">
                         <img class="lang-logo" src="https://upload.wikimedia.org/wikipedia/commons/4/40/VB.NET_Logo.svg" alt="VB.Net logo">
                         <span class="lang-name">VB.Net</span>
-                        <div class="projects">
-                            <p>POS - Karinderya Foods</p>
-                        </div>
                     </div>
-                    <div class="lang-card" data-lang="Kotlin">
+                    <div class="lang-card" data-lang="Kotlin" data-projects="Simple Project">
                         <img class="lang-logo" src="https://upload.wikimedia.org/wikipedia/commons/7/74/Kotlin_Icon.png" alt="Kotlin logo">
                         <span class="lang-name">Kotlin</span>
-                        <div class="projects">
-                            <p>Simple Project</p>
-                        </div>
                     </div>
-                    <div class="lang-card" data-lang="Assembly">
+                    <div class="lang-card" data-lang="Assembly" data-projects="Machine Communication">
                         <img class="lang-logo" src="https://www.svgrepo.com/show/373445/assembly.svg" alt="Assembly icon">
                         <span class="lang-name">Assembly</span>
-                        <div class="projects">
-                            <p>Machine Communication</p>
-                        </div>
                     </div>
-                    <div class="lang-card" data-lang="SQL">
+                    <div class="lang-card" data-lang="SQL" data-projects="Xampp/MySQL">
                         <img class="lang-logo" src="https://iconape.com/wp-content/files/mt/16152/png/101-database.png" alt="SQL icon">
                         <span class="lang-name">SQL</span>
-                        <div class="projects">
-                            <p>Xampp/MySQL</p>
-                        </div>
+                    </div>
+                </div>
+                
+                <!-- Project Popup Modal -->
+                <div id="projects-popup" class="projects-popup">
+                    <div class="popup-content">
+                        <h4 id="popup-lang-name"></h4>
+                        <div id="popup-projects-list" class="popup-projects-list"></div>
                     </div>
                 </div>
 
@@ -163,15 +152,24 @@
                 <p class="link">LinkedIn | Azhil Leigh Encina</p>
                 <p class="link">Github | asieley</p>
             </div>
+        </section>
 
-            <a href="dossier.html" class="dossier-link" title="Access System Dossier">
+        <!-- Floating Navigation Buttons -->
+        <div class="floating-nav">
+            <a href="globe.html" class="nav-icon-link" title="Trace System Origin">
+                <div class="icon-globe">
+                    <div class="meridians"></div>
+                    <div class="equator"></div>
+                    <div class="marker-ph"></div>
+                </div>
+            </a>
+
+            <a href="dossier.html" class="nav-icon-link" title="Access System Dossier">
                 <div class="eye-icon">
                     <div class="eye-inner"></div>
                 </div>
             </a>
-        </section>
-        
-        <div class="scroll-trigger"></div>
+        </div>
     </main>
 
     <script src="script.js"></script>
