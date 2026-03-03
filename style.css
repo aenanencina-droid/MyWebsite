@@ -94,6 +94,23 @@ body {
     text-align: left;
 }
 
+/* Decrypt animation */
+@keyframes decrypt {
+    0% {
+        color: #00FF41;
+        text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+    }
+    100% {
+        color: #00FF41;
+        text-shadow: none;
+    }
+}
+
+.timeline-item.decrypting .year,
+.timeline-item.decrypting .event {
+    animation: decrypt 0.4s ease-out forwards;
+}
+
 .timeline {
     border-left: 2px solid #00FF41;
     margin-left: 10px;
