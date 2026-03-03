@@ -5,10 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CORE_SYSTEM // GEOSPATIAL_VISUALIZATION</title>
     <style>
-        /* CSS: The "Black-Site" Aesthetic - Restored your layout */
         body {
             margin: 0;
-            background: radial-gradient(circle at center, #001500 0%, #000 100%);
+            background: #000;
+            /* Added a subtle scanline/grid effect */
+            background-image: 
+                linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
             color: #00FF41;
             font-family: 'Courier New', Courier, monospace;
             overflow: hidden;
@@ -38,6 +42,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            box-sizing: border-box;
         }
 
         .header { font-size: 1.2rem; letter-spacing: 3px; text-shadow: 0 0 10px #00FF41; }
@@ -68,7 +73,6 @@
 
         #data-stream { font-size: 10px; opacity: 0.8; line-height: 1.5; }
         
-        /* Floating HUD Label for Philippines */
         #marker-label {
             position: absolute;
             padding: 5px 10px;
@@ -80,6 +84,7 @@
             z-index: 20;
             display: none;
             white-space: nowrap;
+            box-shadow: 0 0 10px rgba(0,255,65,0.5);
         }
     </style>
 </head>
@@ -107,16 +112,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        let scene, camera, renderer, globeGroup, marker;
+        let scene, camera, renderer, globeGroup, marker, ring;
         const PH_COORD = { lat: 12.8797, lon: 121.7740 };
-        const RADIUS = 7.5; // Big scale like your earlier version
+        const RADIUS = 8; // Slightly larger for better impact
         const container = document.getElementById('canvas-container');
         const label = document.getElementById('marker-label');
 
         function init() {
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 15;
+            
+            // Adjust FOV to make the globe feel bigger
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 18; 
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -126,10 +133,10 @@
             globeGroup = new THREE.Group();
             scene.add(globeGroup);
 
-            // Create Earth shape using a world map texture
             const loader = new THREE.TextureLoader();
             loader.crossOrigin = "anonymous";
-            // Using a specular map to find landmasses
+            
+            // Texture Loading with Logic fix
             loader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular.png', (texture) => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
@@ -139,7 +146,7 @@
 
                 const positions = [];
                 for (let i = 0; i < data.length; i += 4) {
-                    if (data[i] > 30) { // If pixel is land
+                    if (data[i] > 20) { 
                         const x = (i / 4) % 1024;
                         const y = Math.floor((i / 4) / 1024);
                         const lat = (0.5 - y / 512) * Math.PI;
@@ -155,36 +162,39 @@
                 const geometry = new THREE.BufferGeometry();
                 geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
                 const material = new THREE.PointsMaterial({
-                    size: 0.07,
+                    size: 0.06,
                     color: 0x00FF41,
                     transparent: true,
-                    opacity: 0.8,
+                    opacity: 0.7,
                     blending: THREE.AdditiveBlending
                 });
                 globeGroup.add(new THREE.Points(geometry, material));
             });
 
-            // Add the Philippines Marker
+            // Calculate Coordinates
             const phi = (90 - PH_COORD.lat) * (Math.PI / 180);
             const theta = (PH_COORD.lon + 180) * (Math.PI / 180);
             const mx = -(RADIUS * Math.sin(phi) * Math.cos(theta));
             const my = RADIUS * Math.cos(phi);
             const mz = RADIUS * Math.sin(phi) * Math.sin(theta);
 
-            // Marker Mesh (The pulsing "Arrow" replacement)
-            const markerGeo = new THREE.SphereGeometry(0.15, 12, 12);
+            // Marker
+            const markerGeo = new THREE.SphereGeometry(0.18, 12, 12);
             const markerMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
             marker = new THREE.Mesh(markerGeo, markerMat);
             marker.position.set(mx, my, mz);
             globeGroup.add(marker);
 
-            // Add a ring around the marker for visibility
-            const ringGeo = new THREE.RingGeometry(0.25, 0.35, 32);
+            // Ring
+            const ringGeo = new THREE.RingGeometry(0.3, 0.4, 32);
             const ringMat = new THREE.MeshBasicMaterial({ color: 0x00FF41, side: THREE.DoubleSide });
-            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring = new THREE.Mesh(ringGeo, ringMat);
             ring.position.set(mx * 1.01, my * 1.01, mz * 1.01);
             ring.lookAt(0, 0, 0);
             globeGroup.add(ring);
+
+            // --- CRITICAL FIX: ROTATE GLOBE TO FACE PHILIPPINES INITIALLY ---
+            globeGroup.rotation.y = -1.5; 
 
             animate();
         }
@@ -193,17 +203,18 @@
             if (!marker) return;
             const vector = new THREE.Vector3();
             marker.getWorldPosition(vector);
+            const cameraDist = camera.position.distanceTo(vector);
+            
             vector.project(camera);
 
             const x = (vector.x * .5 + .5) * window.innerWidth;
             const y = (vector.y * -.5 + .5) * window.innerHeight;
 
-            // Simple occlusion: don't show label if marker is behind globe
-            const cameraDist = camera.position.distanceTo(marker.getWorldPosition(new THREE.Vector3()));
-            if (cameraDist < 15) { // marker is on the front side
+            // Only show label if the marker is on the side facing the camera
+            if (cameraDist < 18) { 
                 label.style.display = 'block';
-                label.style.left = `${x + 10}px`;
-                label.style.top = `${y - 10}px`;
+                label.style.left = `${x + 15}px`;
+                label.style.top = `${y - 15}px`;
             } else {
                 label.style.display = 'none';
             }
@@ -211,23 +222,24 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            globeGroup.rotation.y += 0.002;
+            globeGroup.rotation.y += 0.0015; // Slow rotate
             
-            // Pulse the marker scale
             if (marker) {
-                const s = 1 + Math.sin(Date.now() * 0.005) * 0.3;
+                const s = 1 + Math.sin(Date.now() * 0.006) * 0.4;
                 marker.scale.set(s, s, s);
+                if(ring) ring.scale.set(s, s, s);
             }
 
             updateHUD();
             renderer.render(scene, camera);
         }
 
+        // Mouse Interactivity
         document.addEventListener('mousemove', (e) => {
             const mouseX = (e.clientX / window.innerWidth) - 0.5;
             const mouseY = (e.clientY / window.innerHeight) - 0.5;
-            globeGroup.rotation.z = mouseX * 0.1;
-            scene.rotation.x = mouseY * 0.1;
+            scene.rotation.y = mouseX * 0.2;
+            scene.rotation.x = mouseY * 0.2;
         });
 
         window.addEventListener('resize', () => {
