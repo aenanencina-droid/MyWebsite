@@ -1,3 +1,41 @@
+/**
+ * SYSTEM BOOT & LOADER CONTROL
+ */
+window.addEventListener('load', () => {
+    const progressBar = document.getElementById('progress-bar');
+    const percentText = document.getElementById('percent');
+    const loaderWrapper = document.getElementById('loader-wrapper');
+    const loaderText = document.getElementById('loader-text');
+    
+    let width = 0;
+    const messages = ["CONNECTING...", "LOADING_ASSETS...", "BYPASSING_FIREWALL...", "AUTHENTICATING..."];
+
+    const interval = setInterval(() => {
+        if (width >= 100) {
+            clearInterval(interval);
+            setTimeout(() => {
+                loaderWrapper.classList.add('loader-hidden');
+            }, 500);
+        } else {
+            // Simulated progress speed
+            width += Math.floor(Math.random() * 8) + 1;
+            if (width > 100) width = 100;
+            
+            if(progressBar) progressBar.style.width = width + '%';
+            if(percentText) percentText.innerText = width + '%';
+            
+            // Update terminal text based on progress
+            if (loaderText) {
+                const messageIndex = Math.floor((width / 100) * messages.length);
+                loaderText.innerText = messages[Math.min(messageIndex, messages.length - 1)];
+            }
+        }
+    }, 100);
+});
+
+/**
+ * MATRIX BACKGROUND EFFECT
+ */
 const canvas = document.getElementById('matrix-canvas');
 const ctx = canvas.getContext('2d');
 
@@ -6,60 +44,44 @@ let rainDrops = [];
 const fontSize = 18;
 const alphabet = "01";
 
-// Mouse repel effect
 let mouseX = window.innerWidth / 2;
 let mouseY = window.innerHeight / 2;
-const repelRadius = 100; // pixels
-const repelStrength = 2; // how hard to push
+const repelRadius = 100;
+const repelStrength = 2;
 
 function setupCanvas() {
-    // Set canvas to the actual size of the window
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-
-    // Recalculate how many columns fit on the new width
     columns = Math.floor(canvas.width / fontSize);
-    
-    // Reset raindrops array for the new width
     rainDrops = [];
     for (let x = 0; x < columns; x++) {
         rainDrops[x] = Math.random() * -100; 
     }
 }
 
-// Run setup on load
 setupCanvas();
-
-// IMPORTANT: Re-run setup whenever the window is resized
 window.addEventListener('resize', setupCanvas);
 
 const draw = () => {
-    // slight fade to leave longer green trails
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     ctx.font = fontSize + 'px monospace';
 
     for (let i = 0; i < rainDrops.length; i++) {
         const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-        
-        // Calculate position for this column
         const x = i * fontSize;
         const y = rainDrops[i] * fontSize;
         
-        // Mouse repel effect
         const dx = x - mouseX;
         const dy = y - mouseY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
         if (distance < repelRadius) {
-            // Push the drop away from mouse
             const angle = Math.atan2(dy, dx);
             const force = (repelRadius - distance) / repelRadius * repelStrength;
             rainDrops[i] -= Math.sin(angle) * force;
         }
         
-        // Wrap around if pushed too far up
         if (rainDrops[i] < -1) {
             rainDrops[i] = canvas.height / fontSize;
         }
@@ -75,62 +97,55 @@ const draw = () => {
 
         ctx.fillText(text, x, y);
 
-        // If the drop hits the bottom of the current canvas height
         if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
             rainDrops[i] = 0;
         }
-        
         rainDrops[i]++;
     }
 };
 
 setInterval(draw, 35);
 
-// Setup and scroll handlers
-const mainCard = document.getElementById('main-card');
-let decryptTriggered = false; // Flag to prevent multiple decrypt calls
+/**
+ * SCROLL & INTERACTION HANDLERS
+ */
+let decryptTriggered = false;
 
 window.addEventListener('scroll', () => {
     const mainCard = document.getElementById('main-card');
     const skillsCard = document.getElementById('skills-card');
     const scrollY = window.scrollY;
     
-    // Trigger expansion after 50px of scrolling for main card
     if (scrollY > 50) {
-        mainCard.classList.add('expanded');
-        // Trigger decrypt effect only once, with proper delay
+        if (mainCard) mainCard.classList.add('expanded');
         if (!decryptTriggered) {
             decryptTriggered = true;
-            setTimeout(() => decryptTimeline(), 300); // Wait for CSS animation to complete
+            setTimeout(() => decryptTimeline(), 300);
         }
     } else {
-        mainCard.classList.remove('expanded');
-        decryptTriggered = false; // Reset when scrolling back up
+        if (mainCard) mainCard.classList.remove('expanded');
+        decryptTriggered = false;
     }
     
-    // expand skills section once the user scrolls past the main-card area
-    const triggerPoint = 300; // adjust as needed
+    const triggerPoint = 300;
     if (scrollY > triggerPoint) {
-        skillsCard.classList.add('expanded-second');
-        mainCard.classList.add('hidden');
-        // animate skill bars when skills section expands
+        if (skillsCard) skillsCard.classList.add('expanded-second');
+        if (mainCard) mainCard.classList.add('hidden');
         animateSkillBars();
     } else {
-        skillsCard.classList.remove('expanded-second');
-        mainCard.classList.remove('hidden');
+        if (skillsCard) skillsCard.classList.remove('expanded-second');
+        if (mainCard) mainCard.classList.remove('hidden');
         resetSkillBars();
     }
 });
 
-// Animate skill bars by reading their data-percent attribute
 function animateSkillBars() {
     const bars = document.querySelectorAll('.skill-bar');
     bars.forEach(bar => {
-        if (bar.dataset.animated === 'true') return; // don't re-run
+        if (bar.dataset.animated === 'true') return;
         const percent = parseInt(bar.getAttribute('data-percent') || '0', 10);
         const fill = bar.querySelector('.skill-fill');
         if (fill) {
-            // slight stagger for nicer effect
             setTimeout(() => { fill.style.width = percent + '%'; }, Math.random() * 300);
             bar.dataset.animated = 'true';
         }
@@ -148,167 +163,101 @@ function resetSkillBars() {
     });
 }
 
-// System Decrypt Effect
+/**
+ * DECRYPT EFFECT
+ */
 function decryptTimeline() {
     const timelineItems = document.querySelectorAll('.timeline-item');
     const symbols = '@#$%&*!?~^|<>';
     
-    timelineItems.forEach((item, index) => {
+    timelineItems.forEach((item) => {
         const yearEl = item.querySelector('.year');
         const eventEl = item.querySelector('.event');
         
-        // Only run decrypt if we haven't already
-        if (item.dataset.decrypted === 'true') {
-            return; // Already decrypted, skip
-        }
+        if (item.dataset.decrypted === 'true') return;
         
-        // Store original text BEFORE modifying anything
         const originalYear = yearEl.textContent.trim();
         const originalEvent = eventEl.textContent.trim();
         
-        // Generate random symbols matching the exact length
-        const randomYear = Array.from(originalYear)
-            .map(() => symbols[Math.floor(Math.random() * symbols.length)])
-            .join('');
-        const randomEvent = Array.from(originalEvent)
-            .map(() => symbols[Math.floor(Math.random() * symbols.length)])
-            .join('');
-        
-        // Set to random encrypted state
-        yearEl.textContent = randomYear;
-        eventEl.textContent = randomEvent;
-        
-        // Trigger animation class
         item.classList.add('decrypting');
         
-        // Decrypt character by character
-        const decryptDuration = 40; // ms per character
+        const decryptDuration = 40;
         let currentIndex = 0;
         const maxLength = Math.max(originalYear.length, originalEvent.length);
         
         const decryptInterval = setInterval(() => {
-            // Build decrypted year
             let decryptedYear = '';
             for (let i = 0; i < originalYear.length; i++) {
-                if (i < currentIndex) {
-                    decryptedYear += originalYear[i];
-                } else {
-                    decryptedYear += symbols[Math.floor(Math.random() * symbols.length)];
-                }
+                decryptedYear += (i < currentIndex) ? originalYear[i] : symbols[Math.floor(Math.random() * symbols.length)];
             }
             yearEl.textContent = decryptedYear;
             
-            // Build decrypted event
             let decryptedEvent = '';
             for (let i = 0; i < originalEvent.length; i++) {
-                if (i < currentIndex) {
-                    decryptedEvent += originalEvent[i];
-                } else {
-                    decryptedEvent += symbols[Math.floor(Math.random() * symbols.length)];
-                }
+                decryptedEvent += (i < currentIndex) ? originalEvent[i] : symbols[Math.floor(Math.random() * symbols.length)];
             }
             eventEl.textContent = decryptedEvent;
             
             currentIndex++;
             
-            // Stop when we've decrypted all characters
             if (currentIndex > maxLength) {
-                // Ensure final text is perfect
                 yearEl.textContent = originalYear;
                 eventEl.textContent = originalEvent;
                 item.classList.remove('decrypting');
-                item.dataset.decrypted = 'true'; // Mark as decrypted
+                item.dataset.decrypted = 'true';
                 clearInterval(decryptInterval);
             }
         }, decryptDuration);
     });
 }
 
-// CURSOR LIGHTNING EFFECT + MOUSE TRACKING
-let cursorX = 0;
-let cursorY = 0;
-
+/**
+ * LIGHTNING & MOUSE EFFECTS
+ */
 document.addEventListener('mousemove', (e) => {
     mouseX = e.clientX;
     mouseY = e.clientY;
-    cursorX = e.clientX;
-    cursorY = e.clientY;
     
-    // Create lightning spark effect randomly
     if (Math.random() > 0.7) {
         createLightningSpark(e.clientX, e.clientY);
     }
 });
 
 function createLightningSpark(x, y) {
-    // create multiple smaller bolts for intensity
     const boltCount = Math.floor(Math.random() * 2) + 1;
-    for (let b = 0; b < boltCount; b++) {
-        spawnBolt(x, y);
-    }
-    // also create a few electron particles around cursor
-    for (let p = 0; p < 3; p++) {
-        createElectron(x, y);
-    }
+    for (let b = 0; b < boltCount; b++) { spawnBolt(x, y); }
+    for (let p = 0; p < 3; p++) { createElectron(x, y); }
 }
 
 function spawnBolt(x, y) {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('width', '120');
-    svg.setAttribute('height', '120');
+    svg.setAttribute('width', '120'); svg.setAttribute('height', '120');
     svg.setAttribute('viewBox', '0 0 120 120');
     svg.classList.add('lightning-svg');
     svg.style.position = 'fixed';
-    svg.style.left = (x - 60) + 'px';
-    svg.style.top = (y - 60) + 'px';
-    svg.style.pointerEvents = 'none';
-    svg.style.zIndex = '999';
+    svg.style.left = (x - 60) + 'px'; svg.style.top = (y - 60) + 'px';
+    svg.style.pointerEvents = 'none'; svg.style.zIndex = '99999';
 
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     let pathData = 'M 60 60';
     const angle = Math.random() * Math.PI * 2;
     const distance = Math.random() * 60 + 30;
     const segments = 6;
-    const endX = 60 + Math.cos(angle) * distance;
-    const endY = 60 + Math.sin(angle) * distance;
 
     for (let i = 1; i <= segments; i++) {
         const t = i / segments;
         const baseX = 60 + Math.cos(angle) * distance * t;
         const baseY = 60 + Math.sin(angle) * distance * t;
-        const jitter = 12;
-        const jitterX = (Math.random() - 0.5) * jitter;
-        const jitterY = (Math.random() - 0.5) * jitter;
-        pathData += ` L ${baseX + jitterX} ${baseY + jitterY}`;
+        pathData += ` L ${baseX + (Math.random()-0.5)*12} ${baseY + (Math.random()-0.5)*12}`;
     }
-    pathData += ` L ${endX} ${endY}`;
 
     path.setAttribute('d', pathData);
     path.setAttribute('stroke', '#00FF41');
     path.setAttribute('stroke-width', '2.5');
     path.setAttribute('fill', 'none');
-    path.setAttribute('filter', 'url(#glow)');
     path.classList.add('lightning-bolt');
 
-    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-    const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
-    filter.setAttribute('id', 'glow');
-    const feGaussianBlur = document.createElementNS('http://www.w3.org/2000/svg', 'feGaussianBlur');
-    feGaussianBlur.setAttribute('stdDeviation', '3');
-    feGaussianBlur.setAttribute('result', 'coloredBlur');
-    filter.appendChild(feGaussianBlur);
-    const feMerge = document.createElementNS('http://www.w3.org/2000/svg', 'feMerge');
-    const feMergeNode1 = document.createElementNS('http://www.w3.org/2000/svg', 'feMergeNode');
-    feMergeNode1.setAttribute('in', 'coloredBlur');
-    const feMergeNode2 = document.createElementNS('http://www.w3.org/2000/svg', 'feMergeNode');
-    feMergeNode2.setAttribute('in', 'SourceGraphic');
-    feMerge.appendChild(feMergeNode1);
-    feMerge.appendChild(feMergeNode2);
-    filter.appendChild(feMerge);
-    defs.appendChild(filter);
-    svg.appendChild(defs);
     svg.appendChild(path);
-
     document.body.appendChild(svg);
     setTimeout(() => { svg.remove(); }, 400);
 }
@@ -322,8 +271,4 @@ function createElectron(x, y) {
     dot.style.top = y + Math.sin(angle) * offset + 'px';
     document.body.appendChild(dot);
     setTimeout(() => { dot.remove(); }, 600);
-}
-const messages = ["CONNECTING...", "LOADING_ASSETS...", "BYPASSING_FIREWALL...", "AUTHENTICATING..."];
-if (width % 25 === 0) { // Changes every 25%
-    document.getElementById('loader-text').innerText = messages[Math.floor(width/25)];
 }
