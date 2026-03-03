@@ -477,3 +477,14 @@ body {
     0%, 90%, 100% { transform: translate(-50%, -50%) scale(1); }
     95% { transform: translate(-50%, -50%) scale(0.1); }
 }
+@keyframes screen-flicker {
+    0% { opacity: 0; }
+    5% { opacity: 0.5; }
+    10% { opacity: 0; }
+    15% { opacity: 1; }
+    100% { opacity: 1; }
+}
+
+.loader-hidden + main {
+    animation: screen-flicker 0.4s ease-in;
+}
