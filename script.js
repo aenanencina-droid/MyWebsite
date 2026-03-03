@@ -30,7 +30,7 @@ window.addEventListener('load', () => {
                 loaderText.innerText = messages[Math.min(messageIndex, messages.length - 1)];
             }
         }
-    }, 100);
+    }, 30);
 });
 
 /**
@@ -318,3 +318,4 @@ document.querySelectorAll('.lang-card').forEach(card => {
         }, 100);
     });
 });
+
