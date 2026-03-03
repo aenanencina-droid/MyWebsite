@@ -323,3 +323,7 @@ function createElectron(x, y) {
     document.body.appendChild(dot);
     setTimeout(() => { dot.remove(); }, 600);
 }
+const messages = ["CONNECTING...", "LOADING_ASSETS...", "BYPASSING_FIREWALL...", "AUTHENTICATING..."];
+if (width % 25 === 0) { // Changes every 25%
+    document.getElementById('loader-text').innerText = messages[Math.floor(width/25)];
+}
