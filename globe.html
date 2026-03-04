@@ -80,6 +80,18 @@ body {
     white-space: nowrap;
     box-shadow: 0 0 10px rgba(0,255,65,0.5);
 }
+/* Force the button to stay green even after being clicked */
+.btn-return, .btn-return:visited {
+    color: #00FF41 !important;
+    text-decoration: none;
+}
+
+/* Ensure the hover state still works correctly */
+.btn-return:hover {
+    background: #00FF41;
+    color: #000 !important;
+    box-shadow: 0 0 20px #00FF41;
+}
 </style>
 </head>
 
@@ -325,5 +337,6 @@ window.addEventListener('resize', () => {
 
 </body>
 </html>
+
 
 
