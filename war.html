@@ -110,22 +110,15 @@ let state = "INIT";
 let basePos = null;
 let selectedWeapon = null;
 let mouse = {x:0,y:0};
+
 let projectiles = [];
 let explosions = [];
+let smokeParticles = [];
 
 /* ================= MAP ================= */
 const mapImg = new Image();
-
-/* ⭐ MORE RELIABLE MAP SOURCE */
 mapImg.src = "https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg";
-
-mapImg.onload = () => {
-    mapLoaded = true;
-};
-
-mapImg.onerror = () => {
-    console.warn("Map failed to load — using grid fallback.");
-};
+mapImg.onload = () => mapLoaded = true;
 
 /* ================= RESIZE ================= */
 function resize() {
@@ -189,25 +182,27 @@ function launch(start,end,type){
 
 /* ================= DRAW MAP ================= */
 function drawMap(){
-
-    // draw world if loaded
     if(mapLoaded){
-        const size = Math.min(width,height)*0.9;
-        const x = (width-size)/2;
-        const y = (height-size)/2;
-
-        ctx.globalAlpha = 0.35; // ⭐ more visible
-        ctx.drawImage(mapImg,x,y,size,size);
+        ctx.globalAlpha = 0.45;
+        ctx.drawImage(mapImg, 0, 0, width, height);
         ctx.globalAlpha = 1;
     }
 
-    // grid always visible
     ctx.strokeStyle = "rgba(0,255,65,0.08)";
+    ctx.lineWidth = 1;
+
     for(let i=0;i<width;i+=40){
-        ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,height); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(i,0);
+        ctx.lineTo(i,height);
+        ctx.stroke();
     }
+
     for(let i=0;i<height;i+=40){
-        ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(width,i); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0,i);
+        ctx.lineTo(width,i);
+        ctx.stroke();
     }
 }
 
@@ -218,7 +213,7 @@ function animate(){
 
     drawMap();
 
-    // HQ
+    /* HQ */
     if(basePos){
         ctx.strokeStyle="#00FF41";
         ctx.lineWidth=2;
@@ -230,7 +225,7 @@ function animate(){
         ctx.fillText("HQ_NODE",basePos.x+14,basePos.y+4);
     }
 
-    // crosshair
+    /* crosshair */
     if(state==="ARMED"){
         ctx.strokeStyle="rgba(255,80,80,.9)";
         ctx.beginPath();
@@ -242,7 +237,7 @@ function animate(){
         ctx.stroke();
     }
 
-    // PROJECTILES
+    /* PROJECTILES */
     for(let i=projectiles.length-1;i>=0;i--){
         const p = projectiles[i];
         p.progress += p.speed;
@@ -261,17 +256,19 @@ function animate(){
             2*(1-t)*t*cy +
             t*t*p.end.y;
 
-        // 🔥 brighter trail
-        ctx.strokeStyle = p.type==="NUKE" ? "#ff3333" : "#00FF41";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(p.start.x,p.start.y);
-        ctx.quadraticCurveTo(cx,cy,x,y);
-        ctx.stroke();
+        /* 🔥 SMOKE PARTICLES */
+        smokeParticles.push({
+            x, y,
+            r: p.type==="NUKE"?6:4,
+            life: 1,
+            decay: p.type==="NUKE"?0.015:0.025
+        });
 
-        // head
-        ctx.fillStyle="#ffffff";
-        ctx.fillRect(x-3,y-3,6,6);
+        /* missile head */
+        ctx.fillStyle = p.type==="NUKE" ? "#ff5533" : "#ffffff";
+        ctx.beginPath();
+        ctx.arc(x,y,4,0,Math.PI*2);
+        ctx.fill();
 
         if(p.progress>=1){
             explosions.push({
@@ -285,7 +282,21 @@ function animate(){
         }
     }
 
-    // EXPLOSIONS
+    /* SMOKE UPDATE */
+    for(let i=smokeParticles.length-1;i>=0;i--){
+        const s = smokeParticles[i];
+        s.life -= s.decay;
+        s.r += 0.15;
+
+        ctx.fillStyle = `rgba(200,200,200,${s.life*0.4})`;
+        ctx.beginPath();
+        ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+        ctx.fill();
+
+        if(s.life <= 0) smokeParticles.splice(i,1);
+    }
+
+    /* EXPLOSIONS */
     for(let i=explosions.length-1;i>=0;i--){
         const e = explosions[i];
         e.r += 2.5;
@@ -308,6 +319,7 @@ function resetSim(){
     selectedWeapon=null;
     projectiles=[];
     explosions=[];
+    smokeParticles=[];
     sideMenu.style.display="none";
     statusMsg.style.display="block";
     statusMsg.innerText="Click anywhere to begin — Select Home Base";
