@@ -198,24 +198,23 @@ function drawMap(){
 
     if(mapLoaded){
 
-        // --- paint ocean BLACK first ---
+        // ocean (black)
         ctx.fillStyle = "#000000";
         ctx.fillRect(0, 0, width, height);
 
-        // --- draw original map ---
+        // draw original map
         ctx.globalAlpha = 0.9;
         ctx.drawImage(mapImg, 0, 0, width, height);
 
-        // --- tint LAND green only ---
+        // tint land green
         ctx.globalCompositeOperation = "source-atop";
         ctx.fillStyle = "rgba(0,255,65,0.85)";
         ctx.fillRect(0, 0, width, height);
 
-        // restore normal drawing
         ctx.globalCompositeOperation = "source-over";
         ctx.globalAlpha = 1;
 
-        // green border
+        // border
         ctx.strokeStyle = "rgba(0,255,65,0.35)";
         ctx.lineWidth = 2;
         ctx.strokeRect(10, 10, width-20, height-20);
@@ -235,7 +234,7 @@ function drawMap(){
     for(let i=0;i<height;i+=40){
         ctx.beginPath();
         ctx.moveTo(0,i);
-        ctx.lineTo(width,i);
+        ctx.lineTo(width,i,height);
         ctx.stroke();
     }
 }
@@ -360,5 +359,3 @@ animate();
 </script>
 </body>
 </html>
-
-
