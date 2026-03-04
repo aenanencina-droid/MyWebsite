@@ -3,348 +3,277 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TERMINAL // WAR_ROOM</title>
+<title>CORE_SYSTEM // GEOSPATIAL_VISUALIZATION</title>
 
 <style>
-body, html {
-    margin: 0;
-    padding: 0;
-    background: #000;
-    color: #00FF41;
-    font-family: 'Courier New', monospace;
-    overflow: hidden;
+body{
+    margin:0;
+    background:#000;
+    overflow:hidden;
+    font-family:monospace;
+    color:#00ff41;
 }
 
-#war-canvas {
-    display: block;
-    background: radial-gradient(circle, #001a00 0%, #000 100%);
+/* BACK BUTTON */
+#backBtn{
+    position:fixed;
+    top:15px;
+    left:15px;
+    z-index:10;
+    padding:10px 16px;
+    background:#000;
+    border:1px solid #00ff41;
+    color:#00ff41;
+    cursor:pointer;
 }
 
-.ui-layer {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
+#backBtn:hover{
+    background:#001a00;
 }
 
-#status-msg {
-    position: absolute;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,40,0,0.95);
-    padding: 14px 28px;
-    border: 2px solid #00FF41;
-    font-weight: bold;
-    text-transform: uppercase;
-    box-shadow: 0 0 20px rgba(0,255,65,.35);
-    pointer-events: auto;
-    z-index: 100;
+/* CROSSHAIR */
+.crosshair{
+    position:fixed;
+    pointer-events:none;
+    width:22px;
+    height:22px;
+    border:2px solid #00ff41;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    z-index:9;
 }
 
-#side-menu {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: none;
-    flex-direction: column;
-    gap: 12px;
-    pointer-events: auto;
+.crosshair::before,
+.crosshair::after{
+    content:"";
+    position:absolute;
+    background:#00ff41;
 }
 
-.weapon-btn {
-    background: rgba(0,20,0,.85);
-    border: 1px solid #00FF41;
-    color: #00FF41;
-    padding: 14px;
-    cursor: pointer;
-    text-transform: uppercase;
-    font-size: 12px;
-    transition: .25s;
+.crosshair::before{
+    width:2px;
+    height:22px;
+    left:50%;
+    transform:translateX(-50%);
 }
 
-.weapon-btn:hover {
-    background: #00FF41;
-    color: #000;
-}
-
-.weapon-btn.active {
-    background: #ff3333;
-    border-color: #ff3333;
-    color: #fff;
-}
-
-.back-btn {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    color: #00FF41;
-    text-decoration: none;
-    font-size: 12px;
-    pointer-events: auto;
+.crosshair::after{
+    height:2px;
+    width:22px;
+    top:50%;
+    transform:translateY(-50%);
 }
 </style>
 </head>
-
 <body>
 
-<canvas id="war-canvas"></canvas>
+<button id="backBtn" onclick="window.location.href='index.html'">
+← BACK TO CORE
+</button>
 
-<div class="ui-layer">
-    <div id="status-msg">
-        Click anywhere to begin — Select Home Base
-    </div>
-
-    <div id="side-menu">
-        <div style="font-size:10px;opacity:.7;">WEAPON_SYSTEMS</div>
-        <button class="weapon-btn" data-type="MISSILE">Tactical Missile</button>
-        <button class="weapon-btn" data-type="NUKE">Thermonuclear</button>
-        <button class="weapon-btn" id="resetBtn"
-            style="margin-top:14px;border-color:#555;color:#777;">
-            Reset SIM
-        </button>
-    </div>
-
-    <a href="index.html" class="back-btn">> RETURN_TO_CORE</a>
-</div>
+<canvas id="canvas"></canvas>
+<div class="crosshair" id="crosshair"></div>
 
 <script>
-const canvas = document.getElementById('war-canvas');
-const ctx = canvas.getContext('2d');
-const statusMsg = document.getElementById('status-msg');
-const sideMenu = document.getElementById('side-menu');
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const crosshair = document.getElementById("crosshair");
 
 let width, height;
-let mapLoaded = false;
-
-/* ================= STATE ================= */
-let state = "INIT";
-let basePos = null;
-let selectedWeapon = null;
-let mouse = {x:0,y:0};
-
 let projectiles = [];
 let explosions = [];
 let smokeParticles = [];
 
-/* ================= MAP ================= */
-const mapImg = new Image();
-mapImg.crossOrigin = "anonymous";
-mapImg.src = "https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg";
-mapImg.onload = () => mapLoaded = true;
-
 /* ================= RESIZE ================= */
-function resize() {
+function resize(){
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
 }
 window.addEventListener("resize", resize);
 resize();
 
-/* ================= INPUT ================= */
-canvas.addEventListener("mousemove", e=>{
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
-});
+/* ================= MAP ================= */
+function drawMap(){
 
-canvas.addEventListener("mousedown", e=>{
-    const x = e.clientX;
-    const y = e.clientY;
+    // --- subtle background grid ---
+    ctx.strokeStyle = "rgba(0,255,65,0.08)";
+    ctx.lineWidth = 1;
 
-    if(state === "INIT"){
-        basePos = {x,y};
-        state = "BASE_SET";
-        statusMsg.innerText = "Command Established — Select Weapon";
-        sideMenu.style.display = "flex";
-        setTimeout(()=> statusMsg.style.display="none",1800);
-        return;
+    for(let x=0;x<width;x+=40){
+        ctx.beginPath();
+        ctx.moveTo(x,0);
+        ctx.lineTo(x,height);
+        ctx.stroke();
     }
 
-    if(state === "ARMED" && selectedWeapon){
-        launch(basePos,{x,y},selectedWeapon);
+    for(let y=0;y<height;y+=40){
+        ctx.beginPath();
+        ctx.moveTo(0,y);
+        ctx.lineTo(width,y);
+        ctx.stroke();
     }
-});
 
-/* ================= BUTTONS ================= */
-document.querySelectorAll(".weapon-btn[data-type]")
-.forEach(btn=>{
-    btn.addEventListener("click",()=>{
-        document.querySelectorAll(".weapon-btn")
-            .forEach(b=>b.classList.remove("active"));
+    // =============================
+    // GREEN WORLD MAP (vector style)
+    // =============================
 
-        btn.classList.add("active");
-        selectedWeapon = btn.dataset.type;
-        state = "ARMED";
-        canvas.style.cursor = "crosshair";
-    });
-});
+    ctx.strokeStyle = "rgba(0,255,65,0.35)";
+    ctx.lineWidth = 2;
 
-document.getElementById("resetBtn").onclick = resetSim;
+    ctx.beginPath();
 
-/* ================= LAUNCH ================= */
-function launch(start,end,type){
+    // rough continents (stylized tactical look)
+
+    // North America
+    ctx.moveTo(width*0.18, height*0.32);
+    ctx.lineTo(width*0.22, height*0.25);
+    ctx.lineTo(width*0.27, height*0.28);
+    ctx.lineTo(width*0.26, height*0.36);
+    ctx.lineTo(width*0.21, height*0.38);
+    ctx.closePath();
+
+    // South America
+    ctx.moveTo(width*0.28, height*0.45);
+    ctx.lineTo(width*0.31, height*0.55);
+    ctx.lineTo(width*0.29, height*0.68);
+    ctx.lineTo(width*0.25, height*0.58);
+    ctx.closePath();
+
+    // Europe/Africa
+    ctx.moveTo(width*0.48, height*0.30);
+    ctx.lineTo(width*0.52, height*0.28);
+    ctx.lineTo(width*0.55, height*0.35);
+    ctx.lineTo(width*0.53, height*0.55);
+    ctx.lineTo(width*0.49, height*0.52);
+    ctx.lineTo(width*0.47, height*0.40);
+    ctx.closePath();
+
+    // Asia
+    ctx.moveTo(width*0.58, height*0.28);
+    ctx.lineTo(width*0.72, height*0.26);
+    ctx.lineTo(width*0.76, height*0.38);
+    ctx.lineTo(width*0.70, height*0.44);
+    ctx.lineTo(width*0.60, height*0.40);
+    ctx.closePath();
+
+    // Australia
+    ctx.moveTo(width*0.72, height*0.65);
+    ctx.lineTo(width*0.77, height*0.66);
+    ctx.lineTo(width*0.76, height*0.72);
+    ctx.lineTo(width*0.71, height*0.71);
+    ctx.closePath();
+
+    ctx.stroke();
+
+    // ===== GREEN BORDER =====
+    ctx.strokeStyle = "#00ff41";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(2,2,width-4,height-4);
+}
+
+/* ================= PROJECTILE ================= */
+function launchProjectile(x,y,type="MISSILE"){
+
+    const speed = type === "NUKE" ? 0.0025 : 0.006;
+
     projectiles.push({
-        start:{...start},
-        end:{...end},
-        progress:0,
-        speed: type==="NUKE"?0.004:0.012,
-        arc: Math.random()*120+120,
+        startX: width/2,
+        startY: height,
+        targetX: x,
+        targetY: y,
+        progress: 0,
+        speed,
         type
     });
 }
 
-/* ================= DRAW MAP ================= */
-function drawMap(){
-
-    if(mapLoaded){
-        // map
-        ctx.globalAlpha = 0.65;
-        ctx.drawImage(mapImg, 0, 0, width, height);
-        ctx.globalAlpha = 1;
-
-        // ✅ GREEN BORDER AROUND WORLD
-        ctx.strokeStyle = "rgba(0,255,65,0.35)";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(10, 10, width-20, height-20);
-    }
-
-    // grid
-    ctx.strokeStyle = "rgba(0,255,65,0.08)";
-    ctx.lineWidth = 1;
-
-    for(let i=0;i<width;i+=40){
-        ctx.beginPath();
-        ctx.moveTo(i,0);
-        ctx.lineTo(i,height);
-        ctx.stroke();
-    }
-
-    for(let i=0;i<height;i+=40){
-        ctx.beginPath();
-        ctx.moveTo(0,i);
-        ctx.lineTo(width,i);
-        ctx.stroke();
-    }
+/* ================= EXPLOSION ================= */
+function createExplosion(x,y,type){
+    explosions.push({
+        x,y,
+        radius:0,
+        max: type==="NUKE"?180:90,
+        alpha:1
+    });
 }
 
-/* ================= ANIMATE ================= */
+/* ================= MOUSE ================= */
+window.addEventListener("mousemove", e=>{
+    crosshair.style.left = e.clientX+"px";
+    crosshair.style.top = e.clientY+"px";
+});
+
+window.addEventListener("click", e=>{
+    const type = Math.random() < 0.25 ? "NUKE" : "MISSILE";
+    launchProjectile(e.clientX, e.clientY, type);
+});
+
+/* ================= ANIMATION ================= */
 function animate(){
-    ctx.fillStyle = "rgba(0,10,0,.25)";
+
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
     ctx.fillRect(0,0,width,height);
 
     drawMap();
 
-    /* HQ */
-    if(basePos){
-        ctx.strokeStyle="#00FF41";
-        ctx.lineWidth=2;
-        ctx.beginPath();
-        ctx.arc(basePos.x,basePos.y,10,0,Math.PI*2);
-        ctx.stroke();
-
-        ctx.fillStyle="#00FF41";
-        ctx.fillText("HQ_NODE",basePos.x+14,basePos.y+4);
-    }
-
-    /* crosshair */
-    if(state==="ARMED"){
-        ctx.strokeStyle="rgba(255,80,80,.9)";
-        ctx.beginPath();
-        ctx.arc(mouse.x,mouse.y,12,0,Math.PI*2);
-        ctx.moveTo(mouse.x-18,mouse.y);
-        ctx.lineTo(mouse.x+18,mouse.y);
-        ctx.moveTo(mouse.x,mouse.y-18);
-        ctx.lineTo(mouse.x,mouse.y+18);
-        ctx.stroke();
-    }
-
-    /* PROJECTILES */
+    // ===== PROJECTILES =====
     for(let i=projectiles.length-1;i>=0;i--){
         const p = projectiles[i];
         p.progress += p.speed;
 
-        const t = p.progress;
-        const cx = (p.start.x+p.end.x)/2;
-        const cy = (p.start.y+p.end.y)/2 - p.arc;
+        const x = p.startX + (p.targetX - p.startX)*p.progress;
+        const y = p.startY + (p.targetY - p.startY)*p.progress
+                  - Math.sin(p.progress*Math.PI)*200;
 
-        const x =
-            (1-t)*(1-t)*p.start.x +
-            2*(1-t)*t*cx +
-            t*t*p.end.x;
-
-        const y =
-            (1-t)*(1-t)*p.start.y +
-            2*(1-t)*t*cy +
-            t*t*p.end.y;
-
-        // smoke
+        // smoke trail
         smokeParticles.push({
-            x, y,
-            r: p.type==="NUKE"?6:4,
-            life: 1,
-            decay: p.type==="NUKE"?0.015:0.025
+            x,y,
+            r: p.type==="NUKE"?4:2,
+            a:0.5
         });
 
         // missile head
-        ctx.fillStyle = p.type==="NUKE" ? "#ff5533" : "#ffffff";
+        ctx.fillStyle = p.type==="NUKE" ? "#ff3333" : "#00ff41";
         ctx.beginPath();
-        ctx.arc(x,y,4,0,Math.PI*2);
+        ctx.arc(x,y, p.type==="NUKE"?5:3, 0, Math.PI*2);
         ctx.fill();
 
-        if(p.progress>=1){
-            explosions.push({
-                x:p.end.x,
-                y:p.end.y,
-                r:0,
-                max:p.type==="NUKE"?90:35,
-                color:p.type==="NUKE"?"255,60,0":"0,255,65"
-            });
+        if(p.progress >= 1){
+            createExplosion(p.targetX, p.targetY, p.type);
             projectiles.splice(i,1);
         }
     }
 
-    /* SMOKE */
+    // ===== SMOKE =====
     for(let i=smokeParticles.length-1;i>=0;i--){
         const s = smokeParticles[i];
-        s.life -= s.decay;
+        s.a -= 0.01;
         s.r += 0.15;
 
-        ctx.fillStyle = `rgba(200,200,200,${s.life*0.4})`;
+        ctx.fillStyle = `rgba(0,255,65,${s.a})`;
         ctx.beginPath();
-        ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
         ctx.fill();
 
-        if(s.life <= 0) smokeParticles.splice(i,1);
+        if(s.a <= 0) smokeParticles.splice(i,1);
     }
 
-    /* EXPLOSIONS */
+    // ===== EXPLOSIONS =====
     for(let i=explosions.length-1;i>=0;i--){
-        const e = explosions[i];
-        e.r += 2.5;
+        const ex = explosions[i];
+        ex.radius += 3;
+        ex.alpha -= 0.015;
 
+        ctx.strokeStyle = `rgba(0,255,65,${ex.alpha})`;
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(e.x,e.y,e.r,0,Math.PI*2);
-        ctx.fillStyle=`rgba(${e.color},${1-e.r/e.max})`;
-        ctx.fill();
+        ctx.arc(ex.x, ex.y, ex.radius, 0, Math.PI*2);
+        ctx.stroke();
 
-        if(e.r>=e.max) explosions.splice(i,1);
+        if(ex.alpha <= 0) explosions.splice(i,1);
     }
 
     requestAnimationFrame(animate);
-}
-
-/* ================= RESET ================= */
-function resetSim(){
-    state="INIT";
-    basePos=null;
-    selectedWeapon=null;
-    projectiles=[];
-    explosions=[];
-    smokeParticles=[];
-    sideMenu.style.display="none";
-    statusMsg.style.display="block";
-    statusMsg.innerText="Click anywhere to begin — Select Home Base";
-    canvas.style.cursor="default";
 }
 
 animate();
