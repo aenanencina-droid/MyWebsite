@@ -15,20 +15,17 @@ body, html {
     overflow: hidden;
 }
 
-/* Canvas */
 #war-canvas {
     display: block;
     background: radial-gradient(circle, #001a00 0%, #000 100%);
 }
 
-/* Overlay */
 .ui-layer {
     position: absolute;
     inset: 0;
     pointer-events: none;
 }
 
-/* Status */
 #status-msg {
     position: absolute;
     top: 20px;
@@ -44,7 +41,6 @@ body, html {
     z-index: 100;
 }
 
-/* Side menu */
 #side-menu {
     position: absolute;
     right: 20px;
@@ -107,27 +103,31 @@ const statusMsg = document.getElementById('status-msg');
 const sideMenu = document.getElementById('side-menu');
 
 let width, height;
+let mapLoaded = false;
 
-/* =========================
-   GAME STATE
-========================= */
-let state = "INIT"; // INIT → BASE_SET → ARMED
+/* ================= STATE ================= */
+let state = "INIT";
 let basePos = null;
 let selectedWeapon = null;
 let mouse = {x:0,y:0};
-
 let projectiles = [];
 let explosions = [];
 
-/* =========================
-   MAP
-========================= */
+/* ================= MAP ================= */
 const mapImg = new Image();
-mapImg.src = "https://raw.githubusercontent.com/djaiss/mapsicon/master/all/world/512.png";
 
-/* =========================
-   RESIZE
-========================= */
+/* ⭐ MORE RELIABLE MAP SOURCE */
+mapImg.src = "https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg";
+
+mapImg.onload = () => {
+    mapLoaded = true;
+};
+
+mapImg.onerror = () => {
+    console.warn("Map failed to load — using grid fallback.");
+};
+
+/* ================= RESIZE ================= */
 function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
@@ -135,9 +135,7 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-/* =========================
-   INPUT
-========================= */
+/* ================= INPUT ================= */
 canvas.addEventListener("mousemove", e=>{
     mouse.x = e.clientX;
     mouse.y = e.clientY;
@@ -147,7 +145,6 @@ canvas.addEventListener("mousedown", e=>{
     const x = e.clientX;
     const y = e.clientY;
 
-    // STEP 1 — place base
     if(state === "INIT"){
         basePos = {x,y};
         state = "BASE_SET";
@@ -157,15 +154,12 @@ canvas.addEventListener("mousedown", e=>{
         return;
     }
 
-    // STEP 2 — fire weapon
     if(state === "ARMED" && selectedWeapon){
         launch(basePos,{x,y},selectedWeapon);
     }
 });
 
-/* =========================
-   WEAPON BUTTONS
-========================= */
+/* ================= BUTTONS ================= */
 document.querySelectorAll(".weapon-btn[data-type]")
 .forEach(btn=>{
     btn.addEventListener("click",()=>{
@@ -179,12 +173,9 @@ document.querySelectorAll(".weapon-btn[data-type]")
     });
 });
 
-/* RESET */
 document.getElementById("resetBtn").onclick = resetSim;
 
-/* =========================
-   LAUNCH
-========================= */
+/* ================= LAUNCH ================= */
 function launch(start,end,type){
     projectiles.push({
         start:{...start},
@@ -196,21 +187,22 @@ function launch(start,end,type){
     });
 }
 
-/* =========================
-   DRAW MAP
-========================= */
+/* ================= DRAW MAP ================= */
 function drawMap(){
-    ctx.globalAlpha = 0.18;
 
-    const size = Math.min(width,height)*0.9;
-    const x = (width-size)/2;
-    const y = (height-size)/2;
+    // draw world if loaded
+    if(mapLoaded){
+        const size = Math.min(width,height)*0.9;
+        const x = (width-size)/2;
+        const y = (height-size)/2;
 
-    ctx.drawImage(mapImg,x,y,size,size);
-    ctx.globalAlpha = 1;
+        ctx.globalAlpha = 0.35; // ⭐ more visible
+        ctx.drawImage(mapImg,x,y,size,size);
+        ctx.globalAlpha = 1;
+    }
 
-    // grid
-    ctx.strokeStyle = "rgba(0,255,65,0.05)";
+    // grid always visible
+    ctx.strokeStyle = "rgba(0,255,65,0.08)";
     for(let i=0;i<width;i+=40){
         ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,height); ctx.stroke();
     }
@@ -219,16 +211,14 @@ function drawMap(){
     }
 }
 
-/* =========================
-   ANIMATE
-========================= */
+/* ================= ANIMATE ================= */
 function animate(){
     ctx.fillStyle = "rgba(0,10,0,.25)";
     ctx.fillRect(0,0,width,height);
 
     drawMap();
 
-    /* HQ */
+    // HQ
     if(basePos){
         ctx.strokeStyle="#00FF41";
         ctx.lineWidth=2;
@@ -240,9 +230,9 @@ function animate(){
         ctx.fillText("HQ_NODE",basePos.x+14,basePos.y+4);
     }
 
-    /* crosshair when armed */
+    // crosshair
     if(state==="ARMED"){
-        ctx.strokeStyle="rgba(255,80,80,.8)";
+        ctx.strokeStyle="rgba(255,80,80,.9)";
         ctx.beginPath();
         ctx.arc(mouse.x,mouse.y,12,0,Math.PI*2);
         ctx.moveTo(mouse.x-18,mouse.y);
@@ -252,7 +242,7 @@ function animate(){
         ctx.stroke();
     }
 
-    /* PROJECTILES */
+    // PROJECTILES
     for(let i=projectiles.length-1;i>=0;i--){
         const p = projectiles[i];
         p.progress += p.speed;
@@ -261,7 +251,6 @@ function animate(){
         const cx = (p.start.x+p.end.x)/2;
         const cy = (p.start.y+p.end.y)/2 - p.arc;
 
-        // quadratic bezier
         const x =
             (1-t)*(1-t)*p.start.x +
             2*(1-t)*t*cx +
@@ -272,18 +261,17 @@ function animate(){
             2*(1-t)*t*cy +
             t*t*p.end.y;
 
-        // trail
+        // 🔥 brighter trail
         ctx.strokeStyle = p.type==="NUKE" ? "#ff3333" : "#00FF41";
-        ctx.setLineDash([6,6]);
+        ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(p.start.x,p.start.y);
         ctx.quadraticCurveTo(cx,cy,x,y);
         ctx.stroke();
-        ctx.setLineDash([]);
 
         // head
-        ctx.fillStyle="#fff";
-        ctx.fillRect(x-2,y-2,4,4);
+        ctx.fillStyle="#ffffff";
+        ctx.fillRect(x-3,y-3,6,6);
 
         if(p.progress>=1){
             explosions.push({
@@ -297,7 +285,7 @@ function animate(){
         }
     }
 
-    /* EXPLOSIONS */
+    // EXPLOSIONS
     for(let i=explosions.length-1;i>=0;i--){
         const e = explosions[i];
         e.r += 2.5;
@@ -313,9 +301,7 @@ function animate(){
     requestAnimationFrame(animate);
 }
 
-/* =========================
-   RESET
-========================= */
+/* ================= RESET ================= */
 function resetSim(){
     state="INIT";
     basePos=null;
@@ -328,7 +314,6 @@ function resetSim(){
     canvas.style.cursor="default";
 }
 
-/* START */
 animate();
 </script>
 </body>
