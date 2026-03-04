@@ -73,6 +73,16 @@ body, html {
     border-color: #ff3333;
     color: #fff;
 }
+
+.back-btn {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    color: #00FF41;
+    text-decoration: none;
+    font-size: 12px;
+    pointer-events: auto;
+}
 </style>
 </head>
 
@@ -94,6 +104,8 @@ body, html {
             Reset SIM
         </button>
     </div>
+
+    <a href="index.html" class="back-btn">> RETURN_TO_CORE</a>
 </div>
 
 <script>
@@ -117,6 +129,7 @@ let smokeParticles = [];
 
 /* ================= MAP ================= */
 const mapImg = new Image();
+mapImg.crossOrigin = "anonymous";
 mapImg.src = "https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg";
 mapImg.onload = () => mapLoaded = true;
 
@@ -182,12 +195,20 @@ function launch(start,end,type){
 
 /* ================= DRAW MAP ================= */
 function drawMap(){
+
     if(mapLoaded){
-        ctx.globalAlpha = 0.45;
+        // map
+        ctx.globalAlpha = 0.65;
         ctx.drawImage(mapImg, 0, 0, width, height);
         ctx.globalAlpha = 1;
+
+        // ✅ GREEN BORDER AROUND WORLD
+        ctx.strokeStyle = "rgba(0,255,65,0.35)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(10, 10, width-20, height-20);
     }
 
+    // grid
     ctx.strokeStyle = "rgba(0,255,65,0.08)";
     ctx.lineWidth = 1;
 
@@ -256,7 +277,7 @@ function animate(){
             2*(1-t)*t*cy +
             t*t*p.end.y;
 
-        /* 🔥 SMOKE PARTICLES */
+        // smoke
         smokeParticles.push({
             x, y,
             r: p.type==="NUKE"?6:4,
@@ -264,7 +285,7 @@ function animate(){
             decay: p.type==="NUKE"?0.015:0.025
         });
 
-        /* missile head */
+        // missile head
         ctx.fillStyle = p.type==="NUKE" ? "#ff5533" : "#ffffff";
         ctx.beginPath();
         ctx.arc(x,y,4,0,Math.PI*2);
@@ -282,7 +303,7 @@ function animate(){
         }
     }
 
-    /* SMOKE UPDATE */
+    /* SMOKE */
     for(let i=smokeParticles.length-1;i>=0;i--){
         const s = smokeParticles[i];
         s.life -= s.decay;
