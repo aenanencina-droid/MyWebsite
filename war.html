@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TERMINAL // WAR_ROOM</title>
-
 <style>
 body, html {
     margin: 0;
@@ -14,18 +13,15 @@ body, html {
     font-family: 'Courier New', monospace;
     overflow: hidden;
 }
-
 #war-canvas {
     display: block;
     background: radial-gradient(circle, #001a00 0%, #000 100%);
 }
-
 .ui-layer {
     position: absolute;
     inset: 0;
     pointer-events: none;
 }
-
 #status-msg {
     position: absolute;
     top: 20px;
@@ -40,7 +36,6 @@ body, html {
     pointer-events: auto;
     z-index: 100;
 }
-
 #side-menu {
     position: absolute;
     right: 20px;
@@ -51,7 +46,6 @@ body, html {
     gap: 12px;
     pointer-events: auto;
 }
-
 .weapon-btn {
     background: rgba(0,20,0,.85);
     border: 1px solid #00FF41;
@@ -62,18 +56,15 @@ body, html {
     font-size: 12px;
     transition: .25s;
 }
-
 .weapon-btn:hover {
     background: #00FF41;
     color: #000;
 }
-
 .weapon-btn.active {
     background: #ff3333;
     border-color: #ff3333;
     color: #fff;
 }
-
 .back-btn {
     position: absolute;
     bottom: 20px;
@@ -85,29 +76,18 @@ body, html {
 }
 </style>
 </head>
-
 <body>
-
 <canvas id="war-canvas"></canvas>
-
 <div class="ui-layer">
-    <div id="status-msg">
-        Click anywhere to begin — Select Home Base
-    </div>
-
+    <div id="status-msg"> Click anywhere to begin — Select Home Base </div>
     <div id="side-menu">
         <div style="font-size:10px;opacity:.7;">WEAPON_SYSTEMS</div>
         <button class="weapon-btn" data-type="MISSILE">Tactical Missile</button>
         <button class="weapon-btn" data-type="NUKE">Thermonuclear</button>
-        <button class="weapon-btn" id="resetBtn"
-            style="margin-top:14px;border-color:#555;color:#777;">
-            Reset SIM
-        </button>
+        <button class="weapon-btn" id="resetBtn" style="margin-top:14px;border-color:#555;color:#777;"> Reset SIM </button>
     </div>
-
     <a href="index.html" class="back-btn">> RETURN_TO_CORE</a>
 </div>
-
 <script>
 const canvas = document.getElementById('war-canvas');
 const ctx = canvas.getContext('2d');
@@ -122,7 +102,6 @@ let state = "INIT";
 let basePos = null;
 let selectedWeapon = null;
 let mouse = {x:0,y:0};
-
 let projectiles = [];
 let explosions = [];
 let smokeParticles = [];
@@ -150,7 +129,6 @@ canvas.addEventListener("mousemove", e=>{
 canvas.addEventListener("mousedown", e=>{
     const x = e.clientX;
     const y = e.clientY;
-
     if(state === "INIT"){
         basePos = {x,y};
         state = "BASE_SET";
@@ -159,7 +137,6 @@ canvas.addEventListener("mousedown", e=>{
         setTimeout(()=> statusMsg.style.display="none",1800);
         return;
     }
-
     if(state === "ARMED" && selectedWeapon){
         launch(basePos,{x,y},selectedWeapon);
     }
@@ -170,8 +147,7 @@ document.querySelectorAll(".weapon-btn[data-type]")
 .forEach(btn=>{
     btn.addEventListener("click",()=>{
         document.querySelectorAll(".weapon-btn")
-            .forEach(b=>b.classList.remove("active"));
-
+        .forEach(b=>b.classList.remove("active"));
         btn.classList.add("active");
         selectedWeapon = btn.dataset.type;
         state = "ARMED";
@@ -195,26 +171,21 @@ function launch(start,end,type){
 
 /* ================= DRAW MAP ================= */
 function drawMap(){
-
     if(mapLoaded){
-
-        // ocean (black)
-        ctx.fillStyle = "#000000";
+        // black ocean
+        ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, width, height);
 
-        // draw original map
-        ctx.globalAlpha = 0.9;
+        // draw map image
         ctx.drawImage(mapImg, 0, 0, width, height);
 
-        // tint land green
-        ctx.globalCompositeOperation = "source-atop";
-        ctx.fillStyle = "rgba(0,255,65,0.85)";
+        // green land
+        ctx.globalCompositeOperation = "source-in"; // only affect opaque (land)
+        ctx.fillStyle = "rgba(0,255,65,0.8)";
         ctx.fillRect(0, 0, width, height);
-
         ctx.globalCompositeOperation = "source-over";
-        ctx.globalAlpha = 1;
 
-        // border
+        // green border
         ctx.strokeStyle = "rgba(0,255,65,0.35)";
         ctx.lineWidth = 2;
         ctx.strokeRect(10, 10, width-20, height-20);
@@ -223,18 +194,16 @@ function drawMap(){
     // grid
     ctx.strokeStyle = "rgba(0,255,65,0.08)";
     ctx.lineWidth = 1;
-
     for(let i=0;i<width;i+=40){
         ctx.beginPath();
         ctx.moveTo(i,0);
         ctx.lineTo(i,height);
         ctx.stroke();
     }
-
     for(let i=0;i<height;i+=40){
         ctx.beginPath();
         ctx.moveTo(0,i);
-        ctx.lineTo(width,i,height);
+        ctx.lineTo(width,i);
         ctx.stroke();
     }
 }
@@ -243,7 +212,6 @@ function drawMap(){
 function animate(){
     ctx.fillStyle = "rgba(0,10,0,.25)";
     ctx.fillRect(0,0,width,height);
-
     drawMap();
 
     if(basePos){
@@ -252,7 +220,6 @@ function animate(){
         ctx.beginPath();
         ctx.arc(basePos.x,basePos.y,10,0,Math.PI*2);
         ctx.stroke();
-
         ctx.fillStyle="#00FF41";
         ctx.fillText("HQ_NODE",basePos.x+14,basePos.y+4);
     }
@@ -272,27 +239,13 @@ function animate(){
     for(let i=projectiles.length-1;i>=0;i--){
         const p = projectiles[i];
         p.progress += p.speed;
-
         const t = p.progress;
         const cx = (p.start.x+p.end.x)/2;
         const cy = (p.start.y+p.end.y)/2 - p.arc;
+        const x = (1-t)*(1-t)*p.start.x + 2*(1-t)*t*cx + t*t*p.end.x;
+        const y = (1-t)*(1-t)*p.start.y + 2*(1-t)*t*cy + t*t*p.end.y;
 
-        const x =
-            (1-t)*(1-t)*p.start.x +
-            2*(1-t)*t*cx +
-            t*t*p.end.x;
-
-        const y =
-            (1-t)*(1-t)*p.start.y +
-            2*(1-t)*t*cy +
-            t*t*p.end.y;
-
-        smokeParticles.push({
-            x, y,
-            r: p.type==="NUKE"?6:4,
-            life: 1,
-            decay: p.type==="NUKE"?0.015:0.025
-        });
+        smokeParticles.push({ x, y, r: p.type==="NUKE"?6:4, life: 1, decay: p.type==="NUKE"?0.015:0.025 });
 
         ctx.fillStyle = p.type==="NUKE" ? "#ff5533" : "#ffffff";
         ctx.beginPath();
@@ -300,13 +253,7 @@ function animate(){
         ctx.fill();
 
         if(p.progress>=1){
-            explosions.push({
-                x:p.end.x,
-                y:p.end.y,
-                r:0,
-                max:p.type==="NUKE"?90:35,
-                color:p.type==="NUKE"?"255,60,0":"0,255,65"
-            });
+            explosions.push({ x:p.end.x, y:p.end.y, r:0, max:p.type==="NUKE"?90:35, color:p.type==="NUKE"?"255,60,0":"0,255,65" });
             projectiles.splice(i,1);
         }
     }
@@ -316,12 +263,10 @@ function animate(){
         const s = smokeParticles[i];
         s.life -= s.decay;
         s.r += 0.15;
-
         ctx.fillStyle = `rgba(200,200,200,${s.life*0.4})`;
         ctx.beginPath();
         ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
         ctx.fill();
-
         if(s.life <= 0) smokeParticles.splice(i,1);
     }
 
@@ -329,12 +274,10 @@ function animate(){
     for(let i=explosions.length-1;i>=0;i--){
         const e = explosions[i];
         e.r += 2.5;
-
         ctx.beginPath();
         ctx.arc(e.x,e.y,e.r,0,Math.PI*2);
         ctx.fillStyle=`rgba(${e.color},${1-e.r/e.max})`;
         ctx.fill();
-
         if(e.r>=e.max) explosions.splice(i,1);
     }
 
