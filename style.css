@@ -758,3 +758,66 @@ body {
     50% { transform: scale(1.5); opacity: 0.5; }
     100% { transform: scale(1); opacity: 1; }
 }
+/* Container for the profile image */
+.profile-wrapper {
+    position: relative;
+    width: fit-content;
+    margin: 0 auto;
+}
+
+/* The Eye Button Link */
+.eye-scanner-link {
+    position: absolute;
+    bottom: -12px; /* Pulls it slightly over the bottom edge */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 36px;
+    background: #000;
+    border: 1px solid #00ffcc;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    z-index: 10;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: auto;
+    box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+}
+
+/* Drawing the Eye Shape */
+.eye-outer {
+    width: 20px;
+    height: 12px;
+    border: 2px solid #00ffcc;
+    border-radius: 80% 20%; /* Cyberpunk eye slant */
+    transform: rotate(45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.eye-iris {
+    width: 5px;
+    height: 5px;
+    background: #00ffcc;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #00ffcc;
+}
+
+/* Interactive States */
+.eye-scanner-link:hover {
+    background: #00ffcc;
+    box-shadow: 0 0 20px #00ffcc;
+    transform: translateX(-50%) scale(1.1);
+}
+
+.eye-scanner-link:hover .eye-outer {
+    border-color: #000;
+}
+
+.eye-scanner-link:hover .eye-iris {
+    background: #000;
+    box-shadow: none;
+}
