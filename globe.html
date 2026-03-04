@@ -28,7 +28,7 @@ body {
 .interface {
     position: absolute;
     z-index: 10;
-    pointer-events: none;
+    pointer-events: none; /* This stays none so we can rotate the globe */
     width: 92%;
     height: 90%;
     border: 1px solid rgba(0,255,65,0.2);
@@ -39,34 +39,32 @@ body {
     box-sizing: border-box;
 }
 
-.header {
-    font-size: 1.2rem;
-    letter-spacing: 3px;
-    text-shadow: 0 0 10px #00FF41;
-}
-
 .footer {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
     font-size: 0.8rem;
+    pointer-events: auto; /* ⭐ FIX: This allows clicking inside the footer area */
 }
 
-.btn-return {
-    pointer-events: auto;
-    color: #00FF41;
+/* Styling for your new War Room link */
+.btn-link {
+    display: inline-block;
+    margin-top: 10px;
+    color: #ff3333; /* Red for danger */
     text-decoration: none;
-    border: 1px solid #00FF41;
-    padding: 10px 20px;
-    background: rgba(0,255,65,0.05);
-    transition: .25s;
-    text-transform: uppercase;
+    border: 1px solid #ff3333;
+    padding: 5px 10px;
+    background: rgba(255, 0, 0, 0.1);
+    transition: 0.3s;
+    font-weight: bold;
+    letter-spacing: 1px;
 }
 
-.btn-return:hover {
-    background: #00FF41;
+.btn-link:hover {
+    background: #ff3333;
     color: #000;
-    box-shadow: 0 0 20px #00FF41;
+    box-shadow: 0 0 15px #ff3333;
 }
 
 #marker-label {
@@ -327,4 +325,5 @@ window.addEventListener('resize', () => {
 
 </body>
 </html>
+
 
