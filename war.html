@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TERMINAL // WAR_ROOM</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            background: #000;
+            color: #00FF41;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+        }
+
+        /* Tactical Map Style */
+        #war-canvas {
+            display: block;
+            cursor: crosshair;
+            background: radial-gradient(circle, #001a00 0%, #000 100%);
+        }
+
+        /* Overlay UI */
+        .ui-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            border: 1px solid rgba(0, 255, 65, 0.2);
+            box-sizing: border-box;
+        }
+
+        #status-msg {
+            position: absolute;
+            top: 20px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 40, 0, 0.9);
+            padding: 15px 30px;
+            border: 2px solid #00FF41;
+            text-transform: uppercase;
+            font-weight: bold;
+            pointer-events: auto;
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.4);
+        }
+
+        /* Side Menu */
+        #side-menu {
+            position: absolute;
+            right: 20px; top: 50%;
+            transform: translateY(-50%);
+            display: none; /* Hidden until base selected */
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: auto;
+        }
+
+        .weapon-btn {
+            background: rgba(0, 20, 0, 0.8);
+            border: 1px solid #00FF41;
+            color: #00FF41;
+            padding: 15px;
+            cursor: pointer;
+            text-align: center;
+            transition: 0.3s;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .weapon-btn:hover {
+            background: #00FF41;
+            color: #000;
+            box-shadow: 0 0 15px #00FF41;
+        }
+
+        .weapon-btn.active {
+            background: #ff3333;
+            color: #fff;
+            border-color: #ff3333;
+        }
+
+        .back-btn {
+            position: absolute;
+            bottom: 20px; left: 20px;
+            pointer-events: auto;
+            color: #00FF41;
+            text-decoration: none;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="war-canvas"></canvas>
+
+    <div class="ui-layer">
+        <div id="status-msg">Establish Command Link: Select Home Base Location</div>
+        
+        <div id="side-menu">
+            <div style="font-size: 10px; margin-bottom: 5px; opacity: 0.7;">WEAPON_SYSTEMS</div>
+            <button class="weapon-btn" onclick="selectWeapon('MISSILE')">Tactical Missile</button>
+            <button class="weapon-btn" onclick="selectWeapon('NUKE')">Thermonuclear</button>
+            <button class="weapon-btn" onclick="resetSim()" style="margin-top:20px; border-color: #555; color: #777;">Reset SIM</button>
+        </div>
+
+        <a href="index.html" class="back-btn">> RETURN_TO_CORE</a>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('war-canvas');
+        const ctx = canvas.getContext('2d');
+        const statusMsg = document.getElementById('status-msg');
+        const sideMenu = document.getElementById('side-menu');
+
+        let width, height;
+        let basePos = null;
+        let selectedWeapon = null;
+        let projectiles = [];
+        let explosions = [];
+
+        // Load World Map
+        const mapImg = new Image();
+        mapImg.src = 'https://raw.githubusercontent.com/djaiss/mapsicon/master/all/world/512.png'; // Silhouette map
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Game State Logic
+        canvas.addEventListener('mousedown', (e) => {
+            const x = e.clientX;
+            const y = e.clientY;
+
+            if (!basePos) {
+                // Initialize Base
+                basePos = { x, y };
+                statusMsg.innerText = "Command Established. Awaiting Target Selection.";
+                sideMenu.style.display = 'flex';
+                setTimeout(() => { statusMsg.style.display = 'none'; }, 2000);
+            } else if (selectedWeapon) {
+                // Launch Weapon
+                launch(basePos, { x, y }, selectedWeapon);
+            }
+        });
+
+        function selectWeapon(type) {
+            selectedWeapon = type;
+            document.querySelectorAll('.weapon-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function launch(start, end, type) {
+            projectiles.push({
+                start: {...start},
+                end: {...end},
+                pos: {...start},
+                progress: 0,
+                speed: type === 'NUKE' ? 0.005 : 0.015,
+                type: type,
+                arcHeight: Math.random() * 100 + 100
+            });
+        }
+
+        function drawMap() {
+            ctx.globalAlpha = 0.2;
+            ctx.drawImage(mapImg, 0, 0, width, height);
+            ctx.globalAlpha = 1.0;
+
+            // Draw Grid
+            ctx.strokeStyle = 'rgba(0, 255, 65, 0.05)';
+            ctx.lineWidth = 1;
+            for(let i=0; i<width; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,height); ctx.stroke(); }
+            for(let i=0; i<height; i+=40) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(width,i); ctx.stroke(); }
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 8, 0, 0.2)';
+            ctx.fillRect(0, 0, width, height);
+            drawMap();
+
+            // Draw Base
+            if (basePos) {
+                ctx.strokeStyle = '#00FF41';
+                ctx.beginPath();
+                ctx.arc(basePos.x, basePos.y, 10, 0, Math.PI*2);
+                ctx.stroke();
+                ctx.fillStyle = '#00FF41';
+                ctx.fillText("HQ_NODE", basePos.x + 15, basePos.y + 5);
+            }
+
+            // Update Projectiles
+            projectiles.forEach((p, index) => {
+                p.progress += p.speed;
+                
+                // Quadratic curve for trajectory
+                const dx = p.end.x - p.start.x;
+                const dy = p.end.y - p.start.y;
+                p.pos.x = p.start.x + dx * p.progress;
+                p.pos.y = p.start.y + dy * p.progress - Math.sin(p.progress * Math.PI) * p.arcHeight;
+
+                // Tail/Trail
+                ctx.strokeStyle = p.type === 'NUKE' ? '#ff0000' : '#00FF41';
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(p.start.x, p.start.y);
+                ctx.quadraticCurveTo(
+                    (p.start.x + p.end.x)/2, 
+                    ((p.start.y + p.end.y)/2) - p.arcHeight * 2, 
+                    p.pos.x, p.pos.y
+                );
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Head
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(p.pos.x - 2, p.pos.y - 2, 4, 4);
+
+                if (p.progress >= 1) {
+                    explosions.push({
+                        x: p.end.x,
+                        y: p.end.y,
+                        r: 0,
+                        maxR: p.type === 'NUKE' ? 80 : 30,
+                        color: p.type === 'NUKE' ? '255, 50, 0' : '0, 255, 65'
+                    });
+                    projectiles.splice(index, 1);
+                }
+            });
+
+            // Update Explosions
+            explosions.forEach((ex, index) => {
+                ex.r += 2;
+                ctx.beginPath();
+                ctx.arc(ex.x, ex.y, ex.r, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(${ex.color}, ${1 - ex.r/ex.maxR})`;
+                ctx.fill();
+                
+                if (ex.r >= ex.maxR) explosions.splice(index, 1);
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        function resetSim() {
+            basePos = null;
+            projectiles = [];
+            explosions = [];
+            sideMenu.style.display = 'none';
+            statusMsg.style.display = 'block';
+            statusMsg.innerText = "Establish Command Link: Select Home Base Location";
+        }
+
+        animate();
+    </script>
+</body>
+</html>
